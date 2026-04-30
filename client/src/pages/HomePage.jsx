@@ -51,33 +51,36 @@ export default function HomePage() {
 
   return (
     <>
-      <section className="relative h-[360px] overflow-hidden bg-black">
+      <section className="relative h-[286px] overflow-hidden bg-[#e9e9e9]">
         {slides.map((slide, index) => (
           <img
             key={slide.image}
             src={slide.image}
             alt={slide.title}
-            className={`absolute inset-0 h-full w-full object-cover transition-all duration-1000 ${
+            className={`absolute inset-x-0 top-0 h-[248px] w-full object-cover object-center transition-all duration-1000 ${
               index === activeIndex ? "scale-100 opacity-100" : "scale-105 opacity-0"
             }`}
           />
         ))}
 
-        <div className="absolute inset-0 bg-black/28" />
+        <div className="absolute inset-x-0 top-0 h-[248px] bg-white/34" />
 
-        <div className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center text-white">
+        <div className="absolute inset-x-0 top-0 flex h-[248px] flex-col items-center justify-center px-4 text-center text-black">
           <h1
             key={`title-${activeIndex}`}
-            className="mb-3 animate-[fadeIn_0.7s_ease] text-4xl font-bold md:text-5xl"
+            className="old-slider-title mb-1 animate-[fadeIn_0.7s_ease] font-bold leading-tight"
           >
             {slides[activeIndex].title}
           </h1>
-          <p key={`subtitle-${activeIndex}`} className="animate-[fadeIn_0.9s_ease] text-lg md:text-xl">
+          <p
+            key={`subtitle-${activeIndex}`}
+            className="old-slider-subtitle animate-[fadeIn_0.9s_ease] leading-tight"
+          >
             {slides[activeIndex].subtitle}
           </p>
         </div>
 
-        <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
+        <div className="absolute inset-x-0 top-[248px] flex h-[38px] items-center justify-center gap-3 bg-[#ececec]">
           {slides.map((_, index) => (
             <button
               key={`dot-${index}`}
@@ -92,10 +95,12 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-14">
-        <h2 className="mb-10 text-center text-5xl font-light text-zinc-800">Resturant Powered By Students</h2>
-        <div className="grid items-center gap-10 md:grid-cols-[1.7fr_1fr]">
-          <p className="text-center text-sm leading-7 text-zinc-600 md:text-left">
+      <section className="mx-auto max-w-6xl px-4 py-16">
+        <h2 className="mb-12 px-5 pb-[30px] pt-5 text-center text-[54px] font-light leading-tight text-zinc-800">
+          Resturant Powered By Students
+        </h2>
+        <div className="grid items-center gap-10 md:grid-cols-[2fr_1fr]">
+          <p className="mx-auto max-w-[760px] text-center text-[14px] leading-8 text-zinc-600 md:text-left">
             Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quibusdam ea molestiae, ipsa, tenetur itaque
             dicta libero delectus incidunt fuga repudiandae est rerum expedita quia debitis quam illo vero
             laboriosam numquam eius molestias. Quas reprehenderit voluptatem nemo, fugiat modi atque illo earum ea
@@ -103,21 +108,21 @@ export default function HomePage() {
             Laboriosam officia aut, laudantium tempora, voluptates doloremque, quia, reiciendis voluptas voluptatum
             recusandae ipsam. Illo aliquid possimus porro reiciendis eveniet consectetur eligendi amet.
           </p>
-          <img src="/images/cooking-6668437_1280.png" alt="Cooking illustration" className="mx-auto h-72 object-contain" />
+          <img src="/images/cooking-6668437_1280.png" alt="Cooking illustration" className="mx-auto h-[300px] object-contain" />
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-6xl gap-6 px-4 pb-10 md:grid-cols-3">
+      <section className="mx-auto grid max-w-6xl gap-6 px-[50px] pb-10 md:grid-cols-3">
         {featuredCategories.map((item) => (
-          <article key={item.title} className="overflow-hidden rounded-lg border bg-white shadow-sm">
-            <img src={item.image} alt={item.title} className="h-56 w-full object-cover" />
-            <div className="p-4">
-              <h3 className="text-xl font-semibold">{item.title}</h3>
-              <p className="mt-2 text-sm text-zinc-600">
-              Wanna check out the mouth-watering foods of this category? Explore now!
-            </p>
-            </div>
-          </article>
+          <div key={item.title} style={{ padding: "50px 5px" }}>
+            <article className="overflow-hidden rounded-lg border bg-white p-0 shadow-sm">
+              <img src={item.image} alt={item.title} className="h-56 w-full object-cover" />
+              <div className="p-4">
+                <h3 className="text-xl font-semibold">{item.title}</h3>
+                <p className="mt-2 text-sm text-zinc-600">Wanna check out the mouth-watering foods of this category? Explore now!</p>
+              </div>
+            </article>
+          </div>
         ))}
       </section>
 
@@ -152,13 +157,13 @@ export default function HomePage() {
         </Link>
       </section>
 
-      <section className="mx-auto grid max-w-6xl gap-6 px-4 py-14 md:grid-cols-3">
+      <section className="mx-auto grid max-w-6xl gap-6 px-[50px] py-14 md:grid-cols-3">
         {[
           { icon: "🍽️", title: "Variety of Dishes" },
           { icon: "🚚", title: "Free Delivery" },
           { icon: "😊", title: "Excellent Quality" },
         ].map((item) => (
-          <div key={item.title} className="rounded-lg bg-white p-10 text-center shadow-sm">
+          <div key={item.title} className="rounded-lg bg-white text-center shadow-sm" style={{ padding: "50px 50px" }}>
             <div className="text-5xl">{item.icon}</div>
             <h3 className="mt-4 text-xl font-semibold">{item.title}</h3>
           </div>

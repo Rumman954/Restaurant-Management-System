@@ -11,6 +11,26 @@ body {
   font-family: "Pacifico", cursive;
 }
 
+.old-nav-logo-padding {
+  padding-left: 0;
+}
+
+@media (min-width: 992px) {
+  .old-nav-logo-padding {
+    padding-left: 35px;
+  }
+}
+
+.old-slider-title {
+  font-size: 3rem;
+  font-family: "Bree Serif", serif;
+}
+
+.old-slider-subtitle {
+  font-size: 1.45rem;
+  font-family: "Bree Serif", serif;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
