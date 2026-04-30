@@ -20,9 +20,12 @@ export default function FoodsPage() {
           {foods.map((food) => (
             <div key={food._id} className="rounded-xl border bg-white p-5 shadow-sm">
               <h3 className="text-xl font-semibold">{food.fname}</h3>
-              <p className="mt-2 text-sm text-zinc-600">{food.description}</p>
+              <p className="mt-2 text-sm text-zinc-600">
+                This is a popular Food of Bangladesh. Order Now to Grab a bite of it!
+              </p>
+              <p className="mt-2 text-sm text-zinc-500">{food.description}</p>
               <button className="mt-4 rounded-md bg-[#ee6e73] px-4 py-2 text-sm text-white">
-                Order Now
+                Order Now!
               </button>
             </div>
           ))}

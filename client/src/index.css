@@ -24,11 +24,19 @@ body {
 .old-slider-title {
   font-size: 3rem;
   font-family: "Bree Serif", serif;
+  line-height: 110%;
 }
 
 .old-slider-subtitle {
-  font-size: 1.45rem;
+  font-size: 1.64rem;
   font-family: "Bree Serif", serif;
+  line-height: 110%;
+}
+
+.old-h2 {
+  font-size: 3.56rem;
+  font-weight: 400;
+  line-height: 110%;
 }
 
 @keyframes fadeIn {

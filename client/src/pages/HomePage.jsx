@@ -11,7 +11,7 @@ export default function HomePage() {
     {
       image: "/images/banner4.jpg",
       title: "Quality Food at Your Door!",
-      subtitle: "We deliver quality and we've been doing this for years!",
+      subtitle: "We deliver Quality And We're doing this for years!",
     },
   ];
 
@@ -27,10 +27,13 @@ export default function HomePage() {
   const galleryImages = ["/images/banner4.jpg", "/images/banner3.jpg", "/images/banner2.jpg", "/images/banner1.jpg"];
 
   const reviews = [
-    { name: "John", text: "The food of this resturant is just like heaven for me! I keep coming every weekend." },
-    { name: "James", text: "Amazing service and quality. Their delivery and taste are both excellent." },
-    { name: "Diana", text: "Very tasty and fresh. This is one of the best places to order from." },
-    { name: "Farhan Ahmed", text: "Beautiful presentation, quick delivery, and top-notch flavor." },
+    { name: "John", text: "The food of this resturant is just like heaven for me! Its so delicious and tasty that I can't help going there every weekend!" },
+    { name: "James", text: "The food of this resturant is just like heaven for me! Its so delicious and tasty that I can't help going there every weekend!" },
+    { name: "Rolex", text: "The food of this resturant is just like heaven for me! Its so delicious and tasty that I can't help going there every weekend!" },
+    { name: "Farhan Ahmed", text: "The food of this resturant is just like heaven for me! Its so delicious and tasty that I can't help going there every weekend!" },
+    { name: "Bappy Khan", text: "The food of this resturant is just like heaven for me! Its so delicious and tasty that I can't help going there every weekend!" },
+    { name: "Diana", text: "The food of this resturant is just like heaven for me! Its so delicious and tasty that I can't help going there every weekend!" },
+    { name: "Doe", text: "The food of this resturant is just like heaven for me! Its so delicious and tasty that I can't help going there every weekend!" },
   ];
 
   useEffect(() => {
@@ -51,7 +54,7 @@ export default function HomePage() {
 
   return (
     <>
-      <section className="relative h-[286px] overflow-hidden bg-[#e9e9e9]">
+      <section className="relative h-[286px] overflow-hidden bg-[#ececec]">
         {slides.map((slide, index) => (
           <img
             key={slide.image}
@@ -63,12 +66,12 @@ export default function HomePage() {
           />
         ))}
 
-        <div className="absolute inset-x-0 top-0 h-[248px] bg-white/34" />
+        <div className="absolute inset-x-0 top-0 h-[248px] bg-white/30" />
 
-        <div className="absolute inset-x-0 top-0 flex h-[248px] flex-col items-center justify-center px-4 text-center text-black">
+        <div className="absolute inset-x-0 top-0 flex h-[248px] flex-col items-center justify-center px-4 pt-1 text-center text-black">
           <h1
             key={`title-${activeIndex}`}
-            className="old-slider-title mb-1 animate-[fadeIn_0.7s_ease] font-bold leading-tight"
+            className="old-slider-title mb-1 animate-[fadeIn_0.7s_ease] font-bold leading-tight tracking-tight"
           >
             {slides[activeIndex].title}
           </h1>
@@ -80,7 +83,7 @@ export default function HomePage() {
           </p>
         </div>
 
-        <div className="absolute inset-x-0 top-[248px] flex h-[38px] items-center justify-center gap-3 bg-[#ececec]">
+        <div className="absolute inset-x-0 top-[248px] flex h-[38px] items-center justify-center gap-3 bg-[#e9e9e9]">
           {slides.map((_, index) => (
             <button
               key={`dot-${index}`}
@@ -95,20 +98,22 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-16">
-        <h2 className="mb-12 px-5 pb-[30px] pt-5 text-center text-[54px] font-light leading-tight text-zinc-800">
+      <section className="mx-auto max-w-6xl px-4 pb-16 pt-14">
+        <h2 className="old-h2 mb-14 px-5 pb-[30px] pt-5 text-center text-zinc-800">
           Resturant Powered By Students
         </h2>
-        <div className="grid items-center gap-10 md:grid-cols-[2fr_1fr]">
-          <p className="mx-auto max-w-[760px] text-center text-[14px] leading-8 text-zinc-600 md:text-left">
+        <div className="grid items-end gap-8 md:grid-cols-[1.7fr_1fr]">
+          <p className="mx-auto max-w-[700px] text-center text-[14px] leading-8 text-zinc-600 md:text-left">
             Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quibusdam ea molestiae, ipsa, tenetur itaque
-            dicta libero delectus incidunt fuga repudiandae est rerum expedita quia debitis quam illo vero
-            laboriosam numquam eius molestias. Quas reprehenderit voluptatem nemo, fugiat modi atque illo earum ea
-            tenetur sed ipsam repellat minus quibusdam doloremque aliquid odio dolorum reiciendis quisquam eum nobis.
-            Laboriosam officia aut, laudantium tempora, voluptates doloremque, quia, reiciendis voluptas voluptatum
-            recusandae ipsam. Illo aliquid possimus porro reiciendis eveniet consectetur eligendi amet.
+            dicta libero delectus incidunt fuga repudiandae est rerum expedita quia debitis quam illo vero laboriosam
+            numquam eius molestias. Quas reprehenderit voluptatem nemo, fugiat modi atque illo earum ea tenetur sed
+            ipsam repellat minus quibusdam doloremque aliquid odio.
           </p>
-          <img src="/images/cooking-6668437_1280.png" alt="Cooking illustration" className="mx-auto h-[300px] object-contain" />
+          <img
+            src="/images/cooking-6668437_1280.png"
+            alt="Cooking illustration"
+            className="mx-auto h-[230px] object-contain md:mr-8"
+          />
         </div>
       </section>
 
@@ -119,7 +124,7 @@ export default function HomePage() {
               <img src={item.image} alt={item.title} className="h-56 w-full object-cover" />
               <div className="p-4">
                 <h3 className="text-xl font-semibold">{item.title}</h3>
-                <p className="mt-2 text-sm text-zinc-600">Wanna check out the mouth-watering foods of this category? Explore now!</p>
+                <p className="mt-2 text-sm text-zinc-600">Wanna check out the Mouth-Watering Foods of this category ? Explore Now!</p>
               </div>
             </article>
           </div>
@@ -159,12 +164,12 @@ export default function HomePage() {
 
       <section className="mx-auto grid max-w-6xl gap-6 px-[50px] py-14 md:grid-cols-3">
         {[
-          { icon: "🍽️", title: "Variety of Dishes" },
-          { icon: "🚚", title: "Free Delivery" },
-          { icon: "😊", title: "Excellent Quality" },
+          { icon: "local_dining", title: "Variety of Dishes" },
+          { icon: "local_shipping", title: "Free Delivery" },
+          { icon: "mood", title: "Excellent Quality" },
         ].map((item) => (
           <div key={item.title} className="rounded-lg bg-white text-center shadow-sm" style={{ padding: "50px 50px" }}>
-            <div className="text-5xl">{item.icon}</div>
+            <span className="material-icons text-6xl">{item.icon}</span>
             <h3 className="mt-4 text-xl font-semibold">{item.title}</h3>
           </div>
         ))}

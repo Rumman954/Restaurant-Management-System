@@ -20,7 +20,9 @@ export default function CategoriesPage() {
           {categories.map((category) => (
             <div key={category._id} className="rounded-xl border bg-white p-5 shadow-sm">
               <h3 className="text-xl font-semibold">{category.name}</h3>
-              <p className="mt-2 text-sm text-zinc-600">{category.shortDesc}</p>
+              <p className="mt-2 text-sm text-zinc-600">
+                This is a popular category of Bangladesh. Explore the Foods of this category!
+              </p>
               <p className="mt-3 text-sm text-zinc-500">{category.longDesc}</p>
             </div>
           ))}
