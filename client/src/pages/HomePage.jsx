@@ -17,6 +17,7 @@ export default function HomePage() {
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [reviewIndex, setReviewIndex] = useState(0);
+  const [galleryIndex, setGalleryIndex] = useState(0);
 
   const featuredCategories = [
     { title: "Italian", image: "/images/banner1.jpg" },
@@ -52,38 +53,48 @@ export default function HomePage() {
     return () => clearInterval(reviewTimer);
   }, [reviews.length]);
 
+  useEffect(() => {
+    const galleryTimer = setInterval(() => {
+      setGalleryIndex((prev) => (prev + 1) % galleryImages.length);
+    }, 2500);
+
+    return () => clearInterval(galleryTimer);
+  }, [galleryImages.length]);
+
   return (
     <>
-      <section className="relative h-[286px] overflow-hidden bg-[#ececec]">
+      <section className="relative h-[320px] overflow-hidden bg-[#ececec] sm:h-[370px]">
         {slides.map((slide, index) => (
           <img
             key={slide.image}
             src={slide.image}
             alt={slide.title}
-            className={`absolute inset-x-0 top-0 h-[248px] w-full object-cover object-center transition-all duration-1000 ${
+            className={`absolute inset-0 h-full w-full object-cover object-center transition-all duration-1000 ${
               index === activeIndex ? "scale-100 opacity-100" : "scale-105 opacity-0"
             }`}
           />
         ))}
 
-        <div className="absolute inset-x-0 top-0 h-[248px] bg-white/30" />
+        <div className="absolute inset-0 bg-black/25" />
 
-        <div className="absolute inset-x-0 top-0 flex h-[248px] flex-col items-center justify-center px-4 pt-1 text-center text-black">
+        <div className="absolute inset-x-0 top-[22%] flex justify-center px-4 text-center sm:top-[24%]">
+          <div className="w-full max-w-2xl px-5 py-4 text-black sm:px-8 sm:py-5">
           <h1
             key={`title-${activeIndex}`}
-            className="old-slider-title mb-1 animate-[fadeIn_0.7s_ease] font-bold leading-tight tracking-tight"
+            className="mb-1 animate-[fadeIn_0.7s_ease] text-3xl font-bold leading-tight tracking-tight sm:text-[2.35rem]"
           >
             {slides[activeIndex].title}
           </h1>
           <p
             key={`subtitle-${activeIndex}`}
-            className="old-slider-subtitle animate-[fadeIn_0.9s_ease] leading-tight"
+            className="animate-[fadeIn_0.9s_ease] text-lg font-semibold leading-snug sm:text-[1.45rem]"
           >
             {slides[activeIndex].subtitle}
           </p>
+          </div>
         </div>
 
-        <div className="absolute inset-x-0 top-[248px] flex h-[38px] items-center justify-center gap-3 bg-[#e9e9e9]">
+        <div className="absolute inset-x-0 bottom-0 flex h-[44px] items-center justify-center gap-3 bg-white/90">
           {slides.map((_, index) => (
             <button
               key={`dot-${index}`}
@@ -98,21 +109,18 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 pb-16 pt-14">
-        <h2 className="old-h2 mb-14 px-5 pb-[30px] pt-5 text-center text-zinc-800">
+      <section className="mx-auto max-w-6xl px-4 pb-16 pt-12">
+        <h2 className="old-h2 mb-10 px-5 pb-[20px] pt-5 text-center text-zinc-800">
           Resturant Powered By Students
         </h2>
         <div className="grid items-end gap-8 md:grid-cols-[1.7fr_1fr]">
-          <p className="mx-auto max-w-[700px] text-center text-[14px] leading-8 text-zinc-600 md:text-left">
-            Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quibusdam ea molestiae, ipsa, tenetur itaque
-            dicta libero delectus incidunt fuga repudiandae est rerum expedita quia debitis quam illo vero laboriosam
-            numquam eius molestias. Quas reprehenderit voluptatem nemo, fugiat modi atque illo earum ea tenetur sed
-            ipsam repellat minus quibusdam doloremque aliquid odio.
+          <p className="mx-auto max-w-[700px] text-center text-[14px] leading-7 text-zinc-600 md:text-left">
+            Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quibusdam ea molestiae, ipsa, tenetur itaque dicta libero delectus incidunt fuga repudiandae est rerum expedita quia debitis quam illo vero laboriosam numquam eius molestias! Quas reprehenderit voluptatem nemo, fugiat modi atque illo earum ea tenetur sed ipsam repellat minus quibusdam doloremque aliquid odio dolorum reiciendis quisquam eum nobis. Laboriosam officia aut, laudantium tempora, voluptates doloremque, quia, reiciendis voluptas voluptatum recusandae ipsam! Illo aliquid possimus porro reiciendis eveniet consectetur eligendi amet. Voluptate officia provident recusandae eum minus aut nam asperiores beatae sit repellat odio maiores quisquam reprehenderit vel sapiente, voluptas facilis harum dolor hic doloribus, dolores. Non quo magni modi consequatur cumque maiores illum veniam quaerat magnam cum nemo harum, veritatis iure possimus, architecto aperiam quas enim reprehenderit voluptates neque corporis perspiciatis. Nihil soluta, sed nisi, et aliquid facere sequi consectetur quaerat quidem voluptatem numquam magnam animi consequatur tempore ipsum iusto veritatis ea!
           </p>
           <img
             src="/images/cooking-6668437_1280.png"
             alt="Cooking illustration"
-            className="mx-auto h-[230px] object-contain md:mr-8"
+            className="mx-auto h-[300px] w-[329px] object-contain md:mr-8"
           />
         </div>
       </section>
@@ -120,8 +128,12 @@ export default function HomePage() {
       <section className="mx-auto grid max-w-6xl gap-6 px-[50px] pb-10 md:grid-cols-3">
         {featuredCategories.map((item) => (
           <div key={item.title} style={{ padding: "50px 5px" }}>
-            <article className="overflow-hidden rounded-lg border bg-white p-0 shadow-sm">
-              <img src={item.image} alt={item.title} className="h-56 w-full object-cover" />
+            <article className="group overflow-hidden rounded-lg bg-white p-0 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl">
+              <img
+                src={item.image}
+                alt={item.title}
+                className="h-56 w-full object-cover transition duration-300 group-hover:scale-[1.04]"
+              />
               <div className="p-4">
                 <h3 className="text-xl font-semibold">{item.title}</h3>
                 <p className="mt-2 text-sm text-zinc-600">Wanna check out the Mouth-Watering Foods of this category ? Explore Now!</p>
@@ -138,24 +150,38 @@ export default function HomePage() {
       </div>
 
       <section className="mx-auto mb-12 max-w-6xl px-4">
-        <div className="grid gap-5 md:grid-cols-4">
-          {galleryImages.map((image) => (
+        <div className="relative h-56 overflow-hidden rounded-xl shadow-md sm:h-72 md:h-80">
+          {galleryImages.map((image, index) => (
             <img
-              key={image}
+              key={`${image}-${index}`}
               src={image}
               alt="Food gallery"
-              className="h-44 w-full rounded-md object-cover transition duration-300 hover:scale-[1.02]"
+              className={`absolute inset-0 h-full w-full object-cover transition-all duration-700 ${
+                galleryIndex === index ? "scale-100 opacity-100" : "scale-105 opacity-0"
+              }`}
             />
           ))}
+
+          <div className="absolute inset-x-0 bottom-0 flex justify-center gap-2 bg-black/20 py-3">
+            {galleryImages.map((_, index) => (
+              <button
+                key={`gallery-dot-${index}`}
+                type="button"
+                onClick={() => setGalleryIndex(index)}
+                className={`h-2.5 w-2.5 rounded-full transition ${
+                  galleryIndex === index ? "bg-[#ee6e73]" : "bg-white/80"
+                }`}
+                aria-label={`Show gallery image ${index + 1}`}
+              />
+            ))}
+          </div>
         </div>
       </section>
 
       <section className="mx-auto max-w-5xl px-4 py-8 text-center">
         <h2 className="mb-4 text-4xl font-semibold">ABOUT US</h2>
         <p className="text-sm leading-7 text-zinc-600">
-          Lorem ipsum dolor sit amet, consectetur adipisicing elit. Laboriosam optio deserunt labore impedit maiores
-          non consequuntur fugiat, nostrum animi dolor illum, distinctio veniam dicta, reiciendis voluptatum voluptas
-          modi ad sequi assumenda.
+          Lorem ipsum dolor sit amet, consectetur adipisicing elit. Laboriosam optio deserunt labore impedit maiores non consequuntur fugiat, nostrum animi dolor illum, distinctio veniam dicta, reiciendis voluptatum voluptas modi ad sequi assumenda! Eum beatae voluptatum quod labore voluptas quis sint dolorum, architecto autem at. Atque esse, adipisci similique consequuntur cupiditate unde recusandae consequatur accusantium culpa voluptate. Est, mollitia, debitis. Molestiae odio cupiditate odit, illo culpa mollitia sint possimus commodi nemo aperiam quia, harum nulla repellendus iusto. Eligendi nulla laudantium ratione deleniti nostrum. Commodi deleniti temporibus culpa consequatur perspiciatis quae quis, at non molestias dolores dolor quos, illum quidem nulla velit. Architecto, voluptate, id nobis, beatae quisquam omnis minima officia ab voluptas ipsa quia debitis, nemo error! Facilis, ullam. Laboriosam distinctio incidunt optio, impedit maiores eius asperiores amet totam facilis eaque in minus, repellat, architecto iure odio quod possimus. Quam, tempora hic. Ratione nihil eos tenetur vel veniam molestiae, enim maxime deserunt.
         </p>
         <Link to="/about" className="mt-6 inline-block rounded-md bg-[#ee6e73] px-5 py-2.5 text-white">
           Read More »
@@ -175,21 +201,53 @@ export default function HomePage() {
         ))}
       </section>
 
-      <section className="mx-auto max-w-5xl px-4 pb-8 text-center">
-        <h3 className="mb-8 text-4xl font-semibold">What Our Customers Say</h3>
-        <div className="rounded-xl bg-[#ee6e73] p-7 text-white shadow-md">
-          <p key={`review-${reviewIndex}`} className="animate-[fadeIn_0.6s_ease] text-lg leading-8">
-            "{reviews[reviewIndex].text}"
-          </p>
-          <p className="mt-3 text-sm font-semibold">- {reviews[reviewIndex].name}</p>
+      <section className="mx-auto max-w-6xl px-4 pb-10 pt-4 text-center">
+        <h3 className="mb-12 text-5xl font-medium text-zinc-800">What Our Customers Say</h3>
+        <div className="relative mx-auto h-[300px] max-w-5xl overflow-hidden">
+          {reviews.map((review, index) => {
+            const rawOffset = index - reviewIndex;
+            const wrappedOffset =
+              rawOffset > reviews.length / 2
+                ? rawOffset - reviews.length
+                : rawOffset < -reviews.length / 2
+                  ? rawOffset + reviews.length
+                  : rawOffset;
+
+            if (Math.abs(wrappedOffset) > 3) {
+              return null;
+            }
+
+            const isCenter = wrappedOffset === 0;
+            const absOffset = Math.abs(wrappedOffset);
+            const baseOffset = absOffset === 1 ? 138 : absOffset === 2 ? 215 : 280;
+            const xOffset = wrappedOffset === 0 ? 0 : wrappedOffset < 0 ? -baseOffset : baseOffset;
+            const scale = isCenter ? 1 : absOffset === 1 ? 0.9 : absOffset === 2 ? 0.82 : 0.75;
+            const opacity = isCenter ? 1 : absOffset === 1 ? 0.72 : absOffset === 2 ? 0.45 : 0.18;
+            const zIndex = isCenter ? 30 : absOffset === 1 ? 20 : absOffset === 2 ? 14 : 10;
+
+            return (
+              <article
+                key={`${review.name}-${index}`}
+                className="absolute left-1/2 top-1/2 h-[245px] w-[190px] rounded-sm bg-[#ee6e73] p-4 text-white shadow-md transition-all duration-700"
+                style={{
+                  transform: `translate(-50%, -50%) translateX(${xOffset}px) scale(${scale})`,
+                  opacity,
+                  zIndex,
+                }}
+              >
+                <p className="text-[13px] font-semibold leading-7">"{review.text}"</p>
+                <p className={`mt-3 text-base font-semibold ${isCenter ? "opacity-100" : "opacity-90"}`}>{review.name}</p>
+              </article>
+            );
+          })}
         </div>
-        <div className="mt-4 flex justify-center gap-2">
+        <div className="mt-5 flex justify-center gap-2">
           {reviews.map((_, index) => (
             <button
               key={`review-dot-${index}`}
               type="button"
               onClick={() => setReviewIndex(index)}
-              className={`h-2.5 w-2.5 rounded-full ${reviewIndex === index ? "bg-[#ee6e73]" : "bg-zinc-300"}`}
+              className={`h-2.5 w-2.5 rounded-full transition ${reviewIndex === index ? "bg-[#ee6e73]" : "bg-zinc-300"}`}
               aria-label={`Go to review ${index + 1}`}
             />
           ))}
