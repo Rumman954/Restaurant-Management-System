@@ -55,24 +55,12 @@ export default function CategoriesPage() {
           const isExpanded = expandedCategory === id;
 
           return (
-            <article key={id} className="overflow-hidden rounded border border-zinc-200 bg-white shadow-sm">
-              {isExpanded ? (
-                <div className="p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <h3 className="text-2xl font-normal sm:text-3xl">{category.name}</h3>
-                    <button
-                      type="button"
-                      className="text-lg text-zinc-600 transition hover:text-zinc-900"
-                      onClick={() => setExpandedCategory(null)}
-                      aria-label={`Close ${category.name} details`}
-                    >
-                      ×
-                    </button>
-                  </div>
-                  <p className="mt-3 text-sm text-zinc-600">{summary}</p>
-                </div>
-              ) : (
-                <>
+            <div key={id} className="h-[265px] [perspective:1000px]">
+              <div
+                className="relative h-full w-full rounded border border-zinc-200 transition-transform duration-700 [transform-style:preserve-3d]"
+                style={{ transform: isExpanded ? "rotateY(180deg)" : "rotateY(0deg)" }}
+              >
+                <article className="absolute inset-0 overflow-hidden rounded bg-white shadow-sm [backface-visibility:hidden]">
                   <img src={image} alt={category.name} className="h-32 w-full object-cover sm:h-36" />
                   <div className="p-4">
                     <div className="flex items-start justify-between gap-3">
@@ -86,11 +74,26 @@ export default function CategoriesPage() {
                         ⋮
                       </button>
                     </div>
-                    <p className="mt-2 text-sm text-zinc-600">{summary}</p>
+                    <p className="mt-2 text-sm leading-6 text-zinc-600">{summary}</p>
                   </div>
-                </>
-              )}
-            </article>
+                </article>
+
+                <article className="absolute inset-0 flex h-full flex-col rounded bg-white p-4 shadow-sm [backface-visibility:hidden] [transform:rotateY(180deg)]">
+                  <div className="flex items-start justify-between gap-3">
+                    <h3 className="text-2xl font-normal sm:text-3xl">{category.name}</h3>
+                    <button
+                      type="button"
+                      className="text-lg text-zinc-600 transition hover:text-zinc-900"
+                      onClick={() => setExpandedCategory(null)}
+                      aria-label={`Close ${category.name} details`}
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <p className="mt-3 text-sm leading-6 text-zinc-600">{summary}</p>
+                </article>
+              </div>
+            </div>
           );
         })}
       </div>
