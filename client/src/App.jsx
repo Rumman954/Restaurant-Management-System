@@ -8,14 +8,16 @@ import FoodsPage from "./pages/FoodsPage";
 
 function App() {
   return (
-    <div>
+    <div className="flex min-h-screen flex-col">
       <Navbar />
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="/food-categories" element={<CategoriesPage />} />
-        <Route path="/foods" element={<FoodsPage />} />
-      </Routes>
+      <main className="flex-1">
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/food-categories" element={<CategoriesPage />} />
+          <Route path="/foods" element={<FoodsPage />} />
+        </Routes>
+      </main>
       <Footer />
     </div>
   );

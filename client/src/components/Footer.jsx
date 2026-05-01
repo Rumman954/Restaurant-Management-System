@@ -5,10 +5,10 @@ export default function Footer() {
         <div>
           <h3 className="mb-2 text-xl font-semibold">Contact US</h3>
           <p>123, Kuratoli, Kuril, Dhaka</p>
-          <p>Phone : +8801769696969</p>
+          <p>Phone : +8801783891937</p>
         </div>
-        <div>
-          <h3 className="mb-2 text-xl font-semibold">Social Media Links</h3>
+        <div className="md:pl-16 lg:pl-56">
+          <h3 className="mb-2 text-xl font-semibold">Social Media</h3>
           <ul className="space-y-1">
             <li>Facebook</li>
             <li>Instagram</li>
@@ -19,7 +19,7 @@ export default function Footer() {
       </div>
       <div className="border-t border-white/30 px-4 py-3 text-center text-sm md:text-left">
         <div className="mx-auto flex max-w-6xl flex-col gap-1 md:flex-row md:items-center md:justify-between">
-          <p>© 2025 Copyright @ Resturant</p>
+          <p>© 2026 Copyright @ Resturant</p>
           <p>Made in Bangladesh with ♥</p>
         </div>
       </div>

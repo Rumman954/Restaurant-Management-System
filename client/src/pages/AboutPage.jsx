@@ -3,7 +3,7 @@ export default function AboutPage() {
     <main className="mx-auto max-w-6xl px-4 py-10">
       <section className="text-center">
         <h1 className="mb-4 text-5xl font-medium text-zinc-800">ABOUT US</h1>
-        <p className="mx-auto max-w-5xl text-xs leading-6 text-zinc-700">
+        <p className="mx-auto max-w-5xl text-sm leading-7 text-zinc-700">
           Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quas illo maiores commodi quia rerum, recusandae
           corporis consectetur. Nisi tempore distinctio dolorem facere, neque eaque ea! At ratione autem nemo, veniam
           molestias, atque quod explicabo quo non vel consequuntur voluptate obcaecati placeat quasi molestiae eaque
