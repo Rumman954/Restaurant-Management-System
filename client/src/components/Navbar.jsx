@@ -26,6 +26,7 @@ export default function Navbar() {
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [fieldErrors, setFieldErrors] = useState({ email: "", password: "" });
   const [loginStatus, setLoginStatus] = useState({ type: "", message: "" });
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [registerForm, setRegisterForm] = useState({
     fullName: "",
     email: "",
@@ -41,6 +42,8 @@ export default function Navbar() {
     confirmPassword: "",
   });
   const [registerStatus, setRegisterStatus] = useState({ type: "", message: "" });
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+  const [showRegisterConfirmPassword, setShowRegisterConfirmPassword] = useState(false);
   const [authUser, setAuthUser] = useState(getStoredUser);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isProfileEditing, setIsProfileEditing] = useState(false);
@@ -55,6 +58,9 @@ export default function Navbar() {
     confirmNewPassword: "",
   });
   const [orderHistory, setOrderHistory] = useState([]);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
 
   const goToHomeTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -66,6 +72,7 @@ export default function Navbar() {
     setFieldErrors({ email: "", password: "" });
     setLoginForm({ email: "", password: "" });
     setLoginStatus({ type: "", message: "" });
+    setShowLoginPassword(false);
   };
 
   useEffect(() => {
@@ -90,6 +97,8 @@ export default function Navbar() {
     setRegisterForm({ fullName: "", email: "", phone: "", address: "", password: "", confirmPassword: "" });
     setRegisterErrors({ fullName: "", email: "", password: "", confirmPassword: "" });
     setRegisterStatus({ type: "", message: "" });
+    setShowRegisterPassword(false);
+    setShowRegisterConfirmPassword(false);
   };
 
   const switchToRegisterFromLogin = () => {
@@ -259,6 +268,9 @@ export default function Navbar() {
     }
     setProfileStatus({ type: "", message: "" });
     setIsProfileEditing(false);
+    setShowCurrentPassword(false);
+    setShowNewPassword(false);
+    setShowConfirmNewPassword(false);
     setIsProfileOpen(true);
     setIsMenuOpen(false);
   };
@@ -572,35 +584,63 @@ export default function Navbar() {
 
               <div className="mt-8 grid gap-5 sm:grid-cols-2">
                 <div>
-                  <input
-                    type="password"
-                    placeholder="Password"
-                    value={registerForm.password}
-                    onChange={(event) => {
-                      setRegisterForm((prev) => ({ ...prev, password: event.target.value }));
-                      setRegisterErrors((prev) => ({ ...prev, password: "" }));
-                      setRegisterStatus({ type: "", message: "" });
-                    }}
-                    className={`w-full border-0 border-b px-1 py-2 text-zinc-800 outline-none placeholder:text-zinc-400 focus:border-zinc-500 ${
-                      registerErrors.password ? "border-rose-500" : "border-zinc-300"
-                    }`}
-                  />
+                  <div className="relative">
+                    <input
+                      type={showRegisterPassword ? "text" : "password"}
+                      placeholder="Password"
+                      value={registerForm.password}
+                      onChange={(event) => {
+                        setRegisterForm((prev) => ({ ...prev, password: event.target.value }));
+                        setRegisterErrors((prev) => ({ ...prev, password: "" }));
+                        setRegisterStatus({ type: "", message: "" });
+                      }}
+                      className={`w-full border-0 border-b px-1 py-2 pr-9 text-zinc-800 outline-none placeholder:text-zinc-400 focus:border-zinc-500 ${
+                        registerErrors.password ? "border-rose-500" : "border-zinc-300"
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 text-zinc-500 transition hover:text-zinc-700"
+                      onClick={() => setShowRegisterPassword((prev) => !prev)}
+                      aria-label={showRegisterPassword ? "Hide password" : "Show password"}
+                    >
+                      <svg viewBox="0 0 24 24" className="h-4 w-4 fill-none stroke-current stroke-2" aria-hidden="true">
+                        <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z" />
+                        <circle cx="12" cy="12" r="3" />
+                        {showRegisterPassword && <path d="M4 4 20 20" />}
+                      </svg>
+                    </button>
+                  </div>
                   {registerErrors.password && <p className="mt-1 text-xs text-rose-600">{registerErrors.password}</p>}
                 </div>
                 <div>
-                  <input
-                    type="password"
-                    placeholder="Confirm Password"
-                    value={registerForm.confirmPassword}
-                    onChange={(event) => {
-                      setRegisterForm((prev) => ({ ...prev, confirmPassword: event.target.value }));
-                      setRegisterErrors((prev) => ({ ...prev, confirmPassword: "" }));
-                      setRegisterStatus({ type: "", message: "" });
-                    }}
-                    className={`w-full border-0 border-b px-1 py-2 text-zinc-800 outline-none placeholder:text-zinc-400 focus:border-zinc-500 ${
-                      registerErrors.confirmPassword ? "border-rose-500" : "border-zinc-300"
-                    }`}
-                  />
+                  <div className="relative">
+                    <input
+                      type={showRegisterConfirmPassword ? "text" : "password"}
+                      placeholder="Confirm Password"
+                      value={registerForm.confirmPassword}
+                      onChange={(event) => {
+                        setRegisterForm((prev) => ({ ...prev, confirmPassword: event.target.value }));
+                        setRegisterErrors((prev) => ({ ...prev, confirmPassword: "" }));
+                        setRegisterStatus({ type: "", message: "" });
+                      }}
+                      className={`w-full border-0 border-b px-1 py-2 pr-9 text-zinc-800 outline-none placeholder:text-zinc-400 focus:border-zinc-500 ${
+                        registerErrors.confirmPassword ? "border-rose-500" : "border-zinc-300"
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 text-zinc-500 transition hover:text-zinc-700"
+                      onClick={() => setShowRegisterConfirmPassword((prev) => !prev)}
+                      aria-label={showRegisterConfirmPassword ? "Hide password" : "Show password"}
+                    >
+                      <svg viewBox="0 0 24 24" className="h-4 w-4 fill-none stroke-current stroke-2" aria-hidden="true">
+                        <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z" />
+                        <circle cx="12" cy="12" r="3" />
+                        {showRegisterConfirmPassword && <path d="M4 4 20 20" />}
+                      </svg>
+                    </button>
+                  </div>
                   {registerErrors.confirmPassword && (
                     <p className="mt-1 text-xs text-rose-600">{registerErrors.confirmPassword}</p>
                   )}
@@ -664,20 +704,34 @@ export default function Navbar() {
                 <label htmlFor="login-password" className="sr-only">
                   Password
                 </label>
-                <input
-                  id="login-password"
-                  type="password"
-                  placeholder="Password"
-                  value={loginForm.password}
-                  onChange={(event) => {
-                    setLoginForm((prev) => ({ ...prev, password: event.target.value }));
-                    setFieldErrors((prev) => ({ ...prev, password: "" }));
-                    setLoginStatus({ type: "", message: "" });
-                  }}
-                  className={`w-full rounded-lg border px-3 py-2.5 text-zinc-800 outline-none placeholder:text-zinc-400 focus:ring-2 ${
-                    fieldErrors.password ? "border-rose-500 focus:ring-rose-100" : "border-zinc-300 focus:border-rose-400 focus:ring-rose-100"
-                  }`}
-                />
+                <div className="relative">
+                  <input
+                    id="login-password"
+                    type={showLoginPassword ? "text" : "password"}
+                    placeholder="Password"
+                    value={loginForm.password}
+                    onChange={(event) => {
+                      setLoginForm((prev) => ({ ...prev, password: event.target.value }));
+                      setFieldErrors((prev) => ({ ...prev, password: "" }));
+                      setLoginStatus({ type: "", message: "" });
+                    }}
+                    className={`w-full rounded-lg border px-3 py-2.5 pr-10 text-zinc-800 outline-none placeholder:text-zinc-400 focus:ring-2 ${
+                      fieldErrors.password ? "border-rose-500 focus:ring-rose-100" : "border-zinc-300 focus:border-rose-400 focus:ring-rose-100"
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 transition hover:text-zinc-700"
+                    onClick={() => setShowLoginPassword((prev) => !prev)}
+                    aria-label={showLoginPassword ? "Hide password" : "Show password"}
+                  >
+                    <svg viewBox="0 0 24 24" className="h-4 w-4 fill-none stroke-current stroke-2" aria-hidden="true">
+                      <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z" />
+                      <circle cx="12" cy="12" r="3" />
+                      {showLoginPassword && <path d="M4 4 20 20" />}
+                    </svg>
+                  </button>
+                </div>
                 {fieldErrors.password && <p className="mt-1 text-xs text-rose-600">{fieldErrors.password}</p>}
               </div>
 
@@ -816,32 +870,74 @@ export default function Navbar() {
                 <>
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Current Password</p>
-                    <input
-                      type="password"
-                      value={profileForm.currentPassword}
-                      onChange={(event) => setProfileForm((prev) => ({ ...prev, currentPassword: event.target.value }))}
-                      className="mt-1 w-full rounded border border-zinc-300 px-3 py-2 text-sm text-zinc-800 outline-none focus:border-zinc-500"
-                    />
+                    <div className="relative mt-1">
+                      <input
+                        type={showCurrentPassword ? "text" : "password"}
+                        value={profileForm.currentPassword}
+                        onChange={(event) => setProfileForm((prev) => ({ ...prev, currentPassword: event.target.value }))}
+                        className="w-full rounded border border-zinc-300 px-3 py-2 pr-10 text-sm text-zinc-800 outline-none focus:border-zinc-500"
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 transition hover:text-zinc-700"
+                        onClick={() => setShowCurrentPassword((prev) => !prev)}
+                        aria-label={showCurrentPassword ? "Hide password" : "Show password"}
+                      >
+                        <svg viewBox="0 0 24 24" className="h-4 w-4 fill-none stroke-current stroke-2" aria-hidden="true">
+                          <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z" />
+                          <circle cx="12" cy="12" r="3" />
+                          {showCurrentPassword && <path d="M4 4 20 20" />}
+                        </svg>
+                      </button>
+                    </div>
                   </div>
 
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">New Password</p>
-                    <input
-                      type="password"
-                      value={profileForm.newPassword}
-                      onChange={(event) => setProfileForm((prev) => ({ ...prev, newPassword: event.target.value }))}
-                      className="mt-1 w-full rounded border border-zinc-300 px-3 py-2 text-sm text-zinc-800 outline-none focus:border-zinc-500"
-                    />
+                    <div className="relative mt-1">
+                      <input
+                        type={showNewPassword ? "text" : "password"}
+                        value={profileForm.newPassword}
+                        onChange={(event) => setProfileForm((prev) => ({ ...prev, newPassword: event.target.value }))}
+                        className="w-full rounded border border-zinc-300 px-3 py-2 pr-10 text-sm text-zinc-800 outline-none focus:border-zinc-500"
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 transition hover:text-zinc-700"
+                        onClick={() => setShowNewPassword((prev) => !prev)}
+                        aria-label={showNewPassword ? "Hide password" : "Show password"}
+                      >
+                        <svg viewBox="0 0 24 24" className="h-4 w-4 fill-none stroke-current stroke-2" aria-hidden="true">
+                          <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z" />
+                          <circle cx="12" cy="12" r="3" />
+                          {showNewPassword && <path d="M4 4 20 20" />}
+                        </svg>
+                      </button>
+                    </div>
                   </div>
 
                   <div className="sm:col-span-2">
                     <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Confirm New Password</p>
-                    <input
-                      type="password"
-                      value={profileForm.confirmNewPassword}
-                      onChange={(event) => setProfileForm((prev) => ({ ...prev, confirmNewPassword: event.target.value }))}
-                      className="mt-1 w-full rounded border border-zinc-300 px-3 py-2 text-sm text-zinc-800 outline-none focus:border-zinc-500"
-                    />
+                    <div className="relative mt-1">
+                      <input
+                        type={showConfirmNewPassword ? "text" : "password"}
+                        value={profileForm.confirmNewPassword}
+                        onChange={(event) => setProfileForm((prev) => ({ ...prev, confirmNewPassword: event.target.value }))}
+                        className="w-full rounded border border-zinc-300 px-3 py-2 pr-10 text-sm text-zinc-800 outline-none focus:border-zinc-500"
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 transition hover:text-zinc-700"
+                        onClick={() => setShowConfirmNewPassword((prev) => !prev)}
+                        aria-label={showConfirmNewPassword ? "Hide password" : "Show password"}
+                      >
+                        <svg viewBox="0 0 24 24" className="h-4 w-4 fill-none stroke-current stroke-2" aria-hidden="true">
+                          <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z" />
+                          <circle cx="12" cy="12" r="3" />
+                          {showConfirmNewPassword && <path d="M4 4 20 20" />}
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 </>
               )}

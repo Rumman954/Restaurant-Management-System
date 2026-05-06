@@ -9,6 +9,8 @@ export default function FoodsPage() {
   const [expandedFood, setExpandedFood] = useState(null);
   const [orderNotice, setOrderNotice] = useState("");
   const [showLoginWarning, setShowLoginWarning] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
   const fallbackFoods = [
     { _id: "bd-chicken-roast", categoryId: "bangladeshi", fname: "Chicken Roast", image: "/images/Bangladeshi/Chicken RoastBangladeshi Chicken Roast (Bangladeshi ).jpg" },
@@ -71,8 +73,18 @@ export default function FoodsPage() {
   ];
 
   useEffect(() => {
-    api.get("/foods").then((res) => setFoods(res.data)).catch(() => setFoods([]));
-    api.get("/categories").then((res) => setCategories(res.data)).catch(() => setCategories([]));
+    Promise.all([api.get("/foods"), api.get("/categories")])
+      .then(([foodsRes, categoriesRes]) => {
+        setFoods(foodsRes.data);
+        setCategories(categoriesRes.data);
+        setLoadError("");
+      })
+      .catch(() => {
+        setFoods([]);
+        setCategories([]);
+        setLoadError("Could not load foods from server. Showing fallback menu.");
+      })
+      .finally(() => setIsLoading(false));
   }, []);
   const selectedCategory = searchParams.get("category") || "all";
 
@@ -100,6 +112,7 @@ export default function FoodsPage() {
             {orderNotice}
           </p>
         )}
+        {loadError && <p className="mb-5 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">{loadError}</p>}
         <h2 className="mb-8 text-center text-4xl font-medium text-zinc-800 sm:text-5xl">Foods Area!</h2>
         <div className="mb-7 flex flex-wrap items-center justify-center gap-2">
           <button
@@ -126,6 +139,13 @@ export default function FoodsPage() {
             </button>
           ))}
         </div>
+        {isLoading && (
+          <div className="mb-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div key={`food-skeleton-${index}`} className="h-[320px] animate-pulse rounded border border-zinc-200 bg-zinc-100" />
+            ))}
+          </div>
+        )}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {visibleFoods.map((food) => {
             const id = food._id ?? food.fname;

@@ -6,6 +6,8 @@ export default function CategoriesPage() {
   const navigate = useNavigate();
   const [categories, setCategories] = useState([]);
   const [expandedCategory, setExpandedCategory] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
   const fallbackCategories = [
     {
@@ -41,7 +43,18 @@ export default function CategoriesPage() {
   ];
 
   useEffect(() => {
-    api.get("/categories").then((res) => setCategories(res.data)).catch(() => setCategories([]));
+    setIsLoading(true);
+    api
+      .get("/categories")
+      .then((res) => {
+        setCategories(res.data);
+        setLoadError("");
+      })
+      .catch(() => {
+        setCategories([]);
+        setLoadError("Could not load categories from server. Showing fallback categories.");
+      })
+      .finally(() => setIsLoading(false));
   }, []);
 
   const displayedCategories = categories.length > 0 ? categories : fallbackCategories;
@@ -49,6 +62,14 @@ export default function CategoriesPage() {
   return (
     <main className="mx-auto max-w-6xl px-4 py-10 sm:py-12">
       <h1 className="mb-8 text-center text-4xl font-medium text-zinc-800 sm:text-5xl">Categories</h1>
+      {loadError && <p className="mb-5 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">{loadError}</p>}
+      {isLoading && (
+        <div className="mb-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div key={`category-skeleton-${index}`} className="h-[265px] animate-pulse rounded border border-zinc-200 bg-zinc-100" />
+          ))}
+        </div>
+      )}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {displayedCategories.map((category) => {
           const id = category._id ?? category.name;
