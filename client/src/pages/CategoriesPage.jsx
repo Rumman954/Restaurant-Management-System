@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 
 export default function CategoriesPage() {
+  const navigate = useNavigate();
   const [categories, setCategories] = useState([]);
   const [expandedCategory, setExpandedCategory] = useState(null);
 
@@ -55,20 +57,32 @@ export default function CategoriesPage() {
           const isExpanded = expandedCategory === id;
 
           return (
-            <div key={id} className="h-[265px] [perspective:1000px]">
+            <button
+              key={id}
+              type="button"
+              className="group h-[265px] w-full [perspective:1000px] transition-transform duration-300 hover:-translate-y-1"
+              onClick={() => navigate(`/foods?category=${id}`)}
+            >
               <div
-                className="relative h-full w-full rounded border border-zinc-200 transition-transform duration-700 [transform-style:preserve-3d]"
+                className="relative h-full w-full rounded border border-zinc-200 transition-transform duration-700 group-hover:shadow-lg [transform-style:preserve-3d]"
                 style={{ transform: isExpanded ? "rotateY(180deg)" : "rotateY(0deg)" }}
               >
                 <article className="absolute inset-0 overflow-hidden rounded bg-white shadow-sm [backface-visibility:hidden]">
-                  <img src={image} alt={category.name} className="h-32 w-full object-cover sm:h-36" />
+                  <img
+                    src={image}
+                    alt={category.name}
+                    className="h-32 w-full object-cover transition-transform duration-500 group-hover:scale-105 sm:h-36"
+                  />
                   <div className="p-4">
                     <div className="flex items-start justify-between gap-3">
                       <h3 className="text-2xl font-normal sm:text-3xl">{category.name}</h3>
                       <button
                         type="button"
                         className="text-xl leading-none text-zinc-700 transition hover:text-zinc-900"
-                        onClick={() => setExpandedCategory(id)}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setExpandedCategory(id);
+                        }}
                         aria-label={`Show ${category.name} details`}
                       >
                         ⋮
@@ -84,7 +98,10 @@ export default function CategoriesPage() {
                     <button
                       type="button"
                       className="text-lg text-zinc-600 transition hover:text-zinc-900"
-                      onClick={() => setExpandedCategory(null)}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setExpandedCategory(null);
+                      }}
                       aria-label={`Close ${category.name} details`}
                     >
                       ×
@@ -93,7 +110,7 @@ export default function CategoriesPage() {
                   <p className="mt-3 text-sm leading-6 text-zinc-600">{summary}</p>
                 </article>
               </div>
-            </div>
+            </button>
           );
         })}
       </div>

@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 
 export default function Navbar() {
+  const navigate = useNavigate();
   const getStoredUser = () => {
     try {
       const stored = sessionStorage.getItem("authUser");
@@ -139,6 +140,9 @@ export default function Navbar() {
       if (res?.data?.user) {
         sessionStorage.setItem("authUser", JSON.stringify(res.data.user));
         setAuthUser(res.data.user);
+        if (res.data.user.role === "admin") {
+          navigate("/admin");
+        }
       }
 
       setLoginStatus({ type: "success", message: res?.data?.msg || "Login successful." });
@@ -857,8 +861,23 @@ export default function Navbar() {
                 <div className="mt-3 max-h-52 space-y-2 overflow-y-auto rounded border border-zinc-200 p-3">
                   {orderHistory.map((order) => (
                     <div key={order._id || order.orderId} className="rounded border border-zinc-200 px-3 py-2">
-                      <p className="text-sm font-semibold text-zinc-800">{order.foodName || "Food order"}</p>
-                      <p className="text-xs text-zinc-600">Order ID: {order.orderId}</p>
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-zinc-800">{order.foodName || "Food order"}</p>
+                          <p className="text-xs text-zinc-600">Order ID: {order.orderId}</p>
+                        </div>
+                        <span
+                          className={`rounded px-2 py-0.5 text-[11px] font-semibold uppercase ${
+                            order.status === "delivered"
+                              ? "bg-emerald-100 text-emerald-700"
+                              : order.status === "progress"
+                                ? "bg-amber-100 text-amber-700"
+                                : "bg-zinc-100 text-zinc-700"
+                          }`}
+                        >
+                          {order.status === "delivered" ? "Delivered" : order.status === "progress" ? "Confirmed" : "Pending"}
+                        </span>
+                      </div>
                     </div>
                   ))}
                 </div>
