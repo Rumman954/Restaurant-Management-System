@@ -23,6 +23,9 @@ No PHP is used in this project.
    - `npm run seed`
 5. Start both:
    - `npm run dev`
+6. Admin login:
+   - Set `ADMIN_EMAIL` in `server/.env`
+   - Login with that email, then open `/admin`
 
 Client: `http://localhost:5173`  
 Server: `http://localhost:5000`

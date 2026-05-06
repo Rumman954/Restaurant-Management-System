@@ -4,6 +4,8 @@ import { api } from "../lib/api";
 export default function FoodsPage() {
   const [foods, setFoods] = useState([]);
   const [expandedFood, setExpandedFood] = useState(null);
+  const [orderNotice, setOrderNotice] = useState("");
+  const [showLoginWarning, setShowLoginWarning] = useState(false);
 
   const fallbackFoods = [
     {
@@ -45,9 +47,19 @@ export default function FoodsPage() {
 
   const displayedFoods = foods.length > 0 ? foods : fallbackFoods;
 
+  const handleLoginWarningOk = () => {
+    setShowLoginWarning(false);
+    window.dispatchEvent(new Event("open-login-modal"));
+  };
+
   return (
     <main>
       <section className="mx-auto max-w-6xl px-4 py-10 sm:py-12">
+        {orderNotice && (
+          <p className="mb-8 rounded border border-zinc-700 bg-[#ee2c72] px-4 py-3 text-center text-sm font-semibold text-white">
+            {orderNotice}
+          </p>
+        )}
         <h2 className="mb-8 text-center text-4xl font-medium text-zinc-800 sm:text-5xl">Foods Area!</h2>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {displayedFoods.map((food) => {
@@ -78,7 +90,32 @@ export default function FoodsPage() {
                         </button>
                       </div>
                       <p className="mt-2 text-sm leading-6 text-zinc-600">{summary}</p>
-                      <button className="mt-4 w-full rounded-sm bg-[#ee6e73] px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-white transition hover:bg-[#e35f66]">
+                      <button
+                        type="button"
+                        className="mt-4 w-full rounded-sm bg-[#ee6e73] px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-white transition hover:bg-[#e35f66]"
+                        onClick={async () => {
+                          const orderName = food.fname || "Food order";
+                          const authToken = sessionStorage.getItem("authToken");
+                          const authUser = sessionStorage.getItem("authUser");
+                          if (!authToken || !authUser) {
+                            setShowLoginWarning(true);
+                            return;
+                          }
+
+                          try {
+                            const res = await api.post(
+                              "/orders",
+                              { foodName: orderName },
+                              { headers: { Authorization: `Bearer ${authToken}` } }
+                            );
+                            const placedOrderId = res?.data?.order?.orderId;
+                            setOrderNotice(`Order Placed! Your Order ID is : ${placedOrderId}`);
+                          } catch (error) {
+                            const message = error?.response?.data?.msg || "Order failed. Please try again.";
+                            setOrderNotice(message);
+                          }
+                        }}
+                      >
                         Order Now!
                       </button>
                     </div>
@@ -104,6 +141,23 @@ export default function FoodsPage() {
           })}
         </div>
       </section>
+
+      {showLoginWarning && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4">
+          <div className="w-full max-w-md rounded bg-white p-6 shadow-xl">
+            <p className="text-center text-base text-zinc-800">For place order please login your account</p>
+            <div className="mt-6 flex justify-center">
+              <button
+                type="button"
+                className="rounded-sm bg-[#ee6e73] px-5 py-2 text-sm font-semibold uppercase tracking-wide text-white transition hover:bg-[#e35f66]"
+                onClick={handleLoginWarningOk}
+              >
+                Ok
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

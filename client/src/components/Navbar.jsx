@@ -1,8 +1,23 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 
 export default function Navbar() {
+  const getStoredUser = () => {
+    try {
+      const stored = sessionStorage.getItem("authUser");
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const getSurname = (name) => {
+    if (!name || typeof name !== "string") return "";
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    return parts.length ? parts[parts.length - 1] : "";
+  };
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -13,6 +28,8 @@ export default function Navbar() {
   const [registerForm, setRegisterForm] = useState({
     fullName: "",
     email: "",
+    phone: "",
+    address: "",
     password: "",
     confirmPassword: "",
   });
@@ -23,6 +40,20 @@ export default function Navbar() {
     confirmPassword: "",
   });
   const [registerStatus, setRegisterStatus] = useState({ type: "", message: "" });
+  const [authUser, setAuthUser] = useState(getStoredUser);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isProfileEditing, setIsProfileEditing] = useState(false);
+  const [profileStatus, setProfileStatus] = useState({ type: "", message: "" });
+  const [profileForm, setProfileForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    address: "",
+    currentPassword: "",
+    newPassword: "",
+    confirmNewPassword: "",
+  });
+  const [orderHistory, setOrderHistory] = useState([]);
 
   const goToHomeTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -36,6 +67,17 @@ export default function Navbar() {
     setLoginStatus({ type: "", message: "" });
   };
 
+  useEffect(() => {
+    const handleOpenLoginModal = () => {
+      openLoginModal();
+    };
+
+    window.addEventListener("open-login-modal", handleOpenLoginModal);
+    return () => {
+      window.removeEventListener("open-login-modal", handleOpenLoginModal);
+    };
+  }, []);
+
   const closeLoginModal = () => {
     setIsLoginOpen(false);
     setFieldErrors({ email: "", password: "" });
@@ -44,9 +86,16 @@ export default function Navbar() {
 
   const openRegisterModal = () => {
     setIsRegisterOpen(true);
-    setRegisterForm({ fullName: "", email: "", password: "", confirmPassword: "" });
+    setRegisterForm({ fullName: "", email: "", phone: "", address: "", password: "", confirmPassword: "" });
     setRegisterErrors({ fullName: "", email: "", password: "", confirmPassword: "" });
     setRegisterStatus({ type: "", message: "" });
+  };
+
+  const switchToRegisterFromLogin = () => {
+    closeLoginModal();
+    setTimeout(() => {
+      openRegisterModal();
+    }, 120);
   };
 
   const closeRegisterModal = () => {
@@ -85,10 +134,11 @@ export default function Navbar() {
       });
 
       if (res?.data?.token) {
-        localStorage.setItem("authToken", res.data.token);
+        sessionStorage.setItem("authToken", res.data.token);
       }
       if (res?.data?.user) {
-        localStorage.setItem("authUser", JSON.stringify(res.data.user));
+        sessionStorage.setItem("authUser", JSON.stringify(res.data.user));
+        setAuthUser(res.data.user);
       }
 
       setLoginStatus({ type: "success", message: res?.data?.msg || "Login successful." });
@@ -135,6 +185,8 @@ export default function Navbar() {
       const res = await api.post("/auth/register", {
         name: registerForm.fullName.trim(),
         email: trimmedEmail,
+        phone: registerForm.phone.trim(),
+        address: registerForm.address.trim(),
         password: registerForm.password,
       });
 
@@ -156,11 +208,114 @@ export default function Navbar() {
     { label: "Foods", to: "/foods" },
     { label: "Contact", to: "#" },
   ];
+  const navItemsWithAdmin = authUser?.role === "admin" ? [...navItems, { label: "Admin", to: "/admin" }] : navItems;
 
-  const accountItems = [
-    { label: "Login", to: "/about" },
-    { label: "Register", to: "/about" },
-  ];
+  const accountItems = authUser
+    ? [{ label: "Logout", to: "#" }]
+    : [
+        { label: "Login", to: "/about" },
+        { label: "Register", to: "/about" },
+      ];
+
+  const handleLogout = () => {
+    sessionStorage.removeItem("authToken");
+    sessionStorage.removeItem("authUser");
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("authUser");
+    setAuthUser(null);
+    setIsProfileOpen(false);
+    setIsProfileEditing(false);
+    setOrderHistory([]);
+    setIsMenuOpen(false);
+  };
+
+  const openProfileModal = () => {
+    if (!authUser) return;
+    setProfileForm({
+      name: authUser.name || "",
+      email: authUser.email || "",
+      phone: authUser.phone || "",
+      address: authUser.address || "",
+      currentPassword: "",
+      newPassword: "",
+      confirmNewPassword: "",
+    });
+    const token = sessionStorage.getItem("authToken");
+    if (token) {
+      api
+        .get("/orders/my", { headers: { Authorization: `Bearer ${token}` } })
+        .then((res) => {
+          setOrderHistory(Array.isArray(res.data) ? res.data : []);
+        })
+        .catch(() => {
+          setOrderHistory([]);
+        });
+    } else {
+      setOrderHistory([]);
+    }
+    setProfileStatus({ type: "", message: "" });
+    setIsProfileEditing(false);
+    setIsProfileOpen(true);
+    setIsMenuOpen(false);
+  };
+
+  const closeProfileModal = () => {
+    setIsProfileOpen(false);
+    setIsProfileEditing(false);
+    setProfileStatus({ type: "", message: "" });
+  };
+
+  const handleProfileSave = async () => {
+    const token = sessionStorage.getItem("authToken");
+    if (!token) {
+      setProfileStatus({ type: "error", message: "Please login again." });
+      return;
+    }
+    if (!profileForm.name.trim() || !profileForm.email.trim()) {
+      setProfileStatus({ type: "error", message: "Name and email are required." });
+      return;
+    }
+    if (profileForm.newPassword && profileForm.newPassword.length < 6) {
+      setProfileStatus({ type: "error", message: "New password must be at least 6 characters." });
+      return;
+    }
+    if (profileForm.newPassword && !profileForm.currentPassword) {
+      setProfileStatus({ type: "error", message: "Please enter current password." });
+      return;
+    }
+    if (profileForm.newPassword !== profileForm.confirmNewPassword) {
+      setProfileStatus({ type: "error", message: "New passwords do not match." });
+      return;
+    }
+
+    try {
+      const res = await api.put(
+        "/auth/profile",
+        {
+          name: profileForm.name.trim(),
+          email: profileForm.email.trim(),
+          phone: profileForm.phone.trim(),
+          address: profileForm.address.trim(),
+          currentPassword: profileForm.currentPassword,
+          newPassword: profileForm.newPassword,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (res?.data?.user) {
+        setAuthUser(res.data.user);
+        sessionStorage.setItem("authUser", JSON.stringify(res.data.user));
+      }
+      setProfileStatus({ type: "success", message: res?.data?.msg || "Profile updated." });
+      setProfileForm((prev) => ({ ...prev, currentPassword: "", newPassword: "", confirmNewPassword: "" }));
+      setIsProfileEditing(false);
+    } catch (error) {
+      const message = error?.response?.data?.msg || "Profile update failed.";
+      setProfileStatus({ type: "error", message });
+    }
+  };
+
+  const surname = getSurname(authUser?.name);
 
   return (
     <>
@@ -175,7 +330,7 @@ export default function Navbar() {
         </Link>
 
           <div className="hidden items-center gap-8 text-sm font-medium lg:flex">
-          {navItems.map((item) => (
+          {navItemsWithAdmin.map((item) => (
             item.label === "Contact" ? (
               <button
                 key={item.label}
@@ -199,6 +354,15 @@ export default function Navbar() {
           </div>
 
         <div className="hidden items-center gap-3 lg:flex">
+          {authUser && (
+            <button
+              type="button"
+              className="text-sm font-semibold text-white transition hover:text-rose-100"
+              onClick={openProfileModal}
+            >
+              Hi, {surname || authUser.name}
+            </button>
+          )}
           {accountItems.map((item) => (
             item.label === "Login" ? (
               <button
@@ -219,6 +383,15 @@ export default function Navbar() {
               >
                 {item.label}
               </button>
+              ) : item.label === "Logout" ? (
+                <button
+                  key={item.label}
+                  type="button"
+                  className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-rose-600 transition duration-200 hover:-translate-y-0.5 hover:bg-rose-50 hover:shadow-sm"
+                  onClick={handleLogout}
+                >
+                  {item.label}
+                </button>
               ) : (
                 <Link
                   key={item.label}
@@ -255,7 +428,16 @@ export default function Navbar() {
           />
           <aside className="relative h-full w-[250px] bg-white px-5 py-6 shadow-2xl">
             <div className="flex flex-col gap-2">
-              {[...navItems, ...accountItems].map((item) =>
+              {authUser && (
+                <button
+                  type="button"
+                  className="rounded-md px-3 py-2 text-left text-base font-semibold text-zinc-700 transition hover:bg-rose-50"
+                  onClick={openProfileModal}
+                >
+                  Hi, {surname || authUser.name}
+                </button>
+              )}
+              {[...navItemsWithAdmin, ...accountItems].map((item) =>
                 item.label === "Contact" ? (
                   <button
                     key={item.label}
@@ -289,6 +471,15 @@ export default function Navbar() {
                       setIsMenuOpen(false);
                       openRegisterModal();
                     }}
+                  >
+                    {item.label}
+                  </button>
+                ) : item.label === "Logout" ? (
+                  <button
+                    key={item.label}
+                    type="button"
+                    className="rounded-md px-3 py-2 text-left text-base font-medium text-zinc-700 transition-colors duration-200 hover:bg-rose-50 hover:text-zinc-800 active:bg-rose-200 active:text-rose-800 focus-visible:bg-rose-50 focus-visible:text-zinc-800 [-webkit-tap-highlight-color:transparent]"
+                    onClick={handleLogout}
                   >
                     {item.label}
                   </button>
@@ -347,6 +538,32 @@ export default function Navbar() {
                   }`}
                 />
                 {registerErrors.email && <p className="mt-1 text-xs text-rose-600">{registerErrors.email}</p>}
+              </div>
+
+              <div className="mt-8">
+                <input
+                  type="text"
+                  placeholder="Phone Number"
+                  value={registerForm.phone}
+                  onChange={(event) => {
+                    setRegisterForm((prev) => ({ ...prev, phone: event.target.value }));
+                    setRegisterStatus({ type: "", message: "" });
+                  }}
+                  className="w-full border-0 border-b border-zinc-300 px-1 py-2 text-zinc-800 outline-none placeholder:text-zinc-400 focus:border-zinc-500"
+                />
+              </div>
+
+              <div className="mt-8">
+                <input
+                  type="text"
+                  placeholder="Address"
+                  value={registerForm.address}
+                  onChange={(event) => {
+                    setRegisterForm((prev) => ({ ...prev, address: event.target.value }));
+                    setRegisterStatus({ type: "", message: "" });
+                  }}
+                  className="w-full border-0 border-b border-zinc-300 px-1 py-2 text-zinc-800 outline-none placeholder:text-zinc-400 focus:border-zinc-500"
+                />
               </div>
 
               <div className="mt-8 grid gap-5 sm:grid-cols-2">
@@ -413,10 +630,12 @@ export default function Navbar() {
       )}
 
       {isLoginOpen && (
-        <div className="fixed inset-0 z-50 bg-black/45 px-4 py-8 sm:py-12">
-          <div className="mx-auto w-full max-w-4xl bg-white p-6 shadow-xl sm:p-8">
-            <h2 className="text-center text-4xl font-light text-zinc-800">Good to See You Back!</h2>
-            <form className="mt-8" onSubmit={handleLoginSubmit} noValidate>
+        <div className="fixed inset-0 z-50 bg-black/60 px-4 py-8 sm:py-12">
+          <div className="mx-auto w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl sm:p-8">
+            <h2 className="text-center text-3xl font-semibold text-zinc-800">Welcome Back</h2>
+            <p className="mt-2 text-center text-sm text-zinc-500">Login to continue ordering your favorite food.</p>
+
+            <form className="mt-7" onSubmit={handleLoginSubmit} noValidate>
               <div>
                 <label htmlFor="login-email" className="sr-only">
                   Email
@@ -431,13 +650,13 @@ export default function Navbar() {
                     setFieldErrors((prev) => ({ ...prev, email: "" }));
                     setLoginStatus({ type: "", message: "" });
                   }}
-                  className={`w-full border-0 border-b px-1 py-2 text-zinc-800 outline-none placeholder:text-zinc-400 focus:border-zinc-500 ${
-                    fieldErrors.email ? "border-rose-500" : "border-zinc-300"
+                  className={`w-full rounded-lg border px-3 py-2.5 text-zinc-800 outline-none placeholder:text-zinc-400 focus:ring-2 ${
+                    fieldErrors.email ? "border-rose-500 focus:ring-rose-100" : "border-zinc-300 focus:border-rose-400 focus:ring-rose-100"
                   }`}
                 />
                 {fieldErrors.email && <p className="mt-1 text-xs text-rose-600">{fieldErrors.email}</p>}
               </div>
-              <div className="mt-8">
+              <div className="mt-4">
                 <label htmlFor="login-password" className="sr-only">
                   Password
                 </label>
@@ -451,8 +670,8 @@ export default function Navbar() {
                     setFieldErrors((prev) => ({ ...prev, password: "" }));
                     setLoginStatus({ type: "", message: "" });
                   }}
-                  className={`w-full border-0 border-b px-1 py-2 text-zinc-800 outline-none placeholder:text-zinc-400 focus:border-zinc-500 ${
-                    fieldErrors.password ? "border-rose-500" : "border-zinc-300"
+                  className={`w-full rounded-lg border px-3 py-2.5 text-zinc-800 outline-none placeholder:text-zinc-400 focus:ring-2 ${
+                    fieldErrors.password ? "border-rose-500 focus:ring-rose-100" : "border-zinc-300 focus:border-rose-400 focus:ring-rose-100"
                   }`}
                 />
                 {fieldErrors.password && <p className="mt-1 text-xs text-rose-600">{fieldErrors.password}</p>}
@@ -464,22 +683,214 @@ export default function Navbar() {
                 </p>
               )}
 
-              <div className="mt-9 flex items-center justify-center gap-3">
+              <div className="mt-7 flex items-center justify-center gap-3">
                 <button
                   type="submit"
-                  className="rounded-sm bg-[#ee6e73] px-5 py-2 text-xs font-semibold uppercase tracking-wide text-white transition-colors duration-200 hover:bg-[#e35f66] active:bg-[#d8565d]"
+                  className="rounded-md bg-[#ee6e73] px-6 py-2.5 text-xs font-semibold uppercase tracking-wide text-white transition-colors duration-200 hover:bg-[#e35f66] active:bg-[#d8565d]"
                 >
                   Login
                 </button>
                 <button
                   type="button"
-                  className="rounded-sm px-4 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900"
+                  className="rounded-md px-4 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900"
                   onClick={closeLoginModal}
                 >
                   Close
                 </button>
               </div>
             </form>
+
+            <div className="my-5 flex items-center gap-3">
+              <span className="h-px flex-1 bg-zinc-200" />
+              <span className="text-xs uppercase tracking-wide text-zinc-400">or</span>
+              <span className="h-px flex-1 bg-zinc-200" />
+            </div>
+
+            <button
+              type="button"
+              className="flex w-full items-center justify-center gap-2 rounded-md border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
+              onClick={() => setLoginStatus({ type: "error", message: "Google login is coming soon." })}
+            >
+              <svg viewBox="0 0 48 48" className="h-5 w-5" aria-hidden="true">
+                <path
+                  fill="#EA4335"
+                  d="M24 9.5c3.35 0 6.35 1.15 8.72 3.41l6.49-6.49C35.17 2.67 29.96.5 24 .5 14.71.5 6.72 5.84 2.84 13.62l7.53 5.85C12.18 13.64 17.6 9.5 24 9.5Z"
+                />
+                <path
+                  fill="#4285F4"
+                  d="M46.5 24.5c0-1.57-.14-3.07-.4-4.5H24v9h12.69c-.55 2.96-2.23 5.47-4.75 7.16l7.3 5.66C43.81 37.6 46.5 31.64 46.5 24.5Z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M10.37 28.53A14.44 14.44 0 0 1 9.5 24c0-1.58.3-3.09.87-4.53l-7.53-5.85A23.44 23.44 0 0 0 .5 24c0 3.78.9 7.36 2.34 10.38l7.53-5.85Z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M24 47.5c5.96 0 10.97-1.97 14.63-5.37l-7.3-5.66c-2.03 1.37-4.64 2.18-7.33 2.18-6.4 0-11.82-4.14-13.63-9.97l-7.53 5.85C6.72 42.16 14.71 47.5 24 47.5Z"
+                />
+              </svg>
+              Continue with Google
+            </button>
+
+            <p className="mt-5 text-center text-sm text-zinc-600">
+              If you don&apos;t have account{" "}
+              <button
+                type="button"
+                className="font-semibold text-rose-600 transition hover:text-rose-700"
+                onClick={switchToRegisterFromLogin}
+              >
+                Register
+              </button>
+            </p>
+          </div>
+        </div>
+      )}
+
+      {isProfileOpen && (
+        <div className="fixed inset-0 z-50 bg-black/45 px-4 py-8 sm:py-12">
+          <div className="mx-auto w-full max-w-3xl rounded bg-white p-6 shadow-xl sm:p-8">
+            <h2 className="text-center text-3xl font-semibold text-zinc-800">Customer Details</h2>
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Name</p>
+                {isProfileEditing ? (
+                  <input
+                    type="text"
+                    value={profileForm.name}
+                    onChange={(event) => setProfileForm((prev) => ({ ...prev, name: event.target.value }))}
+                    className="mt-1 w-full rounded border border-zinc-300 px-3 py-2 text-sm text-zinc-800 outline-none focus:border-zinc-500"
+                  />
+                ) : (
+                  <p className="mt-1 text-sm text-zinc-800">{authUser?.name || "-"}</p>
+                )}
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Email</p>
+                {isProfileEditing ? (
+                  <input
+                    type="email"
+                    value={profileForm.email}
+                    onChange={(event) => setProfileForm((prev) => ({ ...prev, email: event.target.value }))}
+                    className="mt-1 w-full rounded border border-zinc-300 px-3 py-2 text-sm text-zinc-800 outline-none focus:border-zinc-500"
+                  />
+                ) : (
+                  <p className="mt-1 text-sm text-zinc-800">{authUser?.email || "-"}</p>
+                )}
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Phone Number</p>
+                {isProfileEditing ? (
+                  <input
+                    type="text"
+                    value={profileForm.phone}
+                    onChange={(event) => setProfileForm((prev) => ({ ...prev, phone: event.target.value }))}
+                    className="mt-1 w-full rounded border border-zinc-300 px-3 py-2 text-sm text-zinc-800 outline-none focus:border-zinc-500"
+                  />
+                ) : (
+                  <p className="mt-1 text-sm text-zinc-800">{authUser?.phone || "-"}</p>
+                )}
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Address</p>
+                {isProfileEditing ? (
+                  <input
+                    type="text"
+                    value={profileForm.address}
+                    onChange={(event) => setProfileForm((prev) => ({ ...prev, address: event.target.value }))}
+                    className="mt-1 w-full rounded border border-zinc-300 px-3 py-2 text-sm text-zinc-800 outline-none focus:border-zinc-500"
+                  />
+                ) : (
+                  <p className="mt-1 text-sm text-zinc-800">{authUser?.address || "-"}</p>
+                )}
+              </div>
+
+              {isProfileEditing && (
+                <>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Current Password</p>
+                    <input
+                      type="password"
+                      value={profileForm.currentPassword}
+                      onChange={(event) => setProfileForm((prev) => ({ ...prev, currentPassword: event.target.value }))}
+                      className="mt-1 w-full rounded border border-zinc-300 px-3 py-2 text-sm text-zinc-800 outline-none focus:border-zinc-500"
+                    />
+                  </div>
+
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">New Password</p>
+                    <input
+                      type="password"
+                      value={profileForm.newPassword}
+                      onChange={(event) => setProfileForm((prev) => ({ ...prev, newPassword: event.target.value }))}
+                      className="mt-1 w-full rounded border border-zinc-300 px-3 py-2 text-sm text-zinc-800 outline-none focus:border-zinc-500"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Confirm New Password</p>
+                    <input
+                      type="password"
+                      value={profileForm.confirmNewPassword}
+                      onChange={(event) => setProfileForm((prev) => ({ ...prev, confirmNewPassword: event.target.value }))}
+                      className="mt-1 w-full rounded border border-zinc-300 px-3 py-2 text-sm text-zinc-800 outline-none focus:border-zinc-500"
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+
+            {profileStatus.message && (
+              <p className={`mt-4 text-sm ${profileStatus.type === "error" ? "text-rose-600" : "text-emerald-600"}`}>
+                {profileStatus.message}
+              </p>
+            )}
+
+            <div className="mt-7">
+              <h3 className="text-lg font-semibold text-zinc-800">Placed Orders</h3>
+              {orderHistory.length === 0 ? (
+                <p className="mt-2 text-sm text-zinc-600">No orders found yet.</p>
+              ) : (
+                <div className="mt-3 max-h-52 space-y-2 overflow-y-auto rounded border border-zinc-200 p-3">
+                  {orderHistory.map((order) => (
+                    <div key={order._id || order.orderId} className="rounded border border-zinc-200 px-3 py-2">
+                      <p className="text-sm font-semibold text-zinc-800">{order.foodName || "Food order"}</p>
+                      <p className="text-xs text-zinc-600">Order ID: {order.orderId}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="mt-8 flex flex-wrap items-center justify-end gap-3">
+              {isProfileEditing ? (
+                <button
+                  type="button"
+                  className="rounded-sm bg-[#ee6e73] px-5 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-[#e35f66]"
+                  onClick={handleProfileSave}
+                >
+                  Save
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="rounded-sm bg-[#ee6e73] px-5 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-[#e35f66]"
+                  onClick={() => setIsProfileEditing(true)}
+                >
+                  Edit
+                </button>
+              )}
+              <button
+                type="button"
+                className="rounded-sm px-4 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900"
+                onClick={closeProfileModal}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -1,10 +1,11 @@
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import HomePage from "./pages/HomePage";
 import AboutPage from "./pages/AboutPage";
 import CategoriesPage from "./pages/CategoriesPage";
 import FoodsPage from "./pages/FoodsPage";
+import AdminPage from "./pages/AdminPage";
 
 function App() {
   return (
@@ -16,6 +17,9 @@ function App() {
           <Route path="/about" element={<AboutPage />} />
           <Route path="/food-categories" element={<CategoriesPage />} />
           <Route path="/foods" element={<FoodsPage />} />
+          <Route path="/admin" element={<AdminPage />} />
+          <Route path="/Foods" element={<Navigate to="/foods" replace />} />
+          <Route path="/Food-categories" element={<Navigate to="/food-categories" replace />} />
         </Routes>
       </main>
       <Footer />
