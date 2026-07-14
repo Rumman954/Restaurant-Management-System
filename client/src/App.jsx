@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import HomePage from "./pages/HomePage";
@@ -8,9 +8,12 @@ import FoodsPage from "./pages/FoodsPage";
 import AdminPage from "./pages/AdminPage";
 
 function App() {
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith("/admin");
+
   return (
     <div className="flex min-h-screen flex-col">
-      <Navbar />
+      {!isAdminRoute && <Navbar />}
       <main className="flex-1">
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -22,7 +25,7 @@ function App() {
           <Route path="/Food-categories" element={<Navigate to="/food-categories" replace />} />
         </Routes>
       </main>
-      <Footer />
+      {!isAdminRoute && <Footer />}
     </div>
   );
 }

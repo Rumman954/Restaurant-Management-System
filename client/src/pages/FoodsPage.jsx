@@ -1,18 +1,14 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { api } from "../lib/api";
 
 export default function FoodsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [foods, setFoods] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [expandedFood, setExpandedFood] = useState(null);
   const [orderNotice, setOrderNotice] = useState("");
   const [showLoginWarning, setShowLoginWarning] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState("");
 
-  const fallbackFoods = [
+  const menuFoods = [
     { _id: "bd-chicken-roast", categoryId: "bangladeshi", fname: "Chicken Roast", image: "/images/Bangladeshi/Chicken RoastBangladeshi Chicken Roast (Bangladeshi ).jpg" },
     { _id: "bd-morog-polao", categoryId: "bangladeshi", fname: "Morog Polao", image: "/images/Bangladeshi/Morog Polao(Bangladeshi).jpg" },
     { _id: "bd-roshmalai", categoryId: "bangladeshi", fname: "Roshmalai", image: "/images/Bangladeshi/Roshmalai(Bangladeshi).jpg" },
@@ -64,7 +60,7 @@ export default function FoodsPage() {
     details: "Freshly prepared and tasty food item from this category.",
   }));
 
-  const fallbackCategories = [
+  const menuCategories = [
     { _id: "italian", name: "Italian" },
     { _id: "chinese", name: "Chinese" },
     { _id: "snacks", name: "Snacks" },
@@ -72,32 +68,12 @@ export default function FoodsPage() {
     { _id: "thai", name: "Thai" },
   ];
 
-  useEffect(() => {
-    Promise.all([api.get("/foods"), api.get("/categories")])
-      .then(([foodsRes, categoriesRes]) => {
-        setFoods(foodsRes.data);
-        setCategories(categoriesRes.data);
-        setLoadError("");
-      })
-      .catch(() => {
-        setFoods([]);
-        setCategories([]);
-        setLoadError("Could not load foods from server. Showing fallback menu.");
-      })
-      .finally(() => setIsLoading(false));
-  }, []);
   const selectedCategory = searchParams.get("category") || "all";
 
-  const displayedFoods = foods.length > 0 ? foods : fallbackFoods;
-  const displayedCategories = categories.length > 0 ? categories : fallbackCategories;
   const visibleFoods =
     selectedCategory === "all"
-      ? displayedFoods
-      : displayedFoods.filter((food) => {
-          if (!food.categoryId) return false;
-          if (typeof food.categoryId === "string") return food.categoryId === selectedCategory;
-          return food.categoryId?._id === selectedCategory;
-        });
+      ? menuFoods
+      : menuFoods.filter((food) => food.categoryId === selectedCategory);
 
   const handleLoginWarningOk = () => {
     setShowLoginWarning(false);
@@ -112,7 +88,6 @@ export default function FoodsPage() {
             {orderNotice}
           </p>
         )}
-        {loadError && <p className="mb-5 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">{loadError}</p>}
         <h2 className="mb-8 text-center text-4xl font-medium text-zinc-800 sm:text-5xl">Foods Area!</h2>
         <div className="mb-7 flex flex-wrap items-center justify-center gap-2">
           <button
@@ -124,7 +99,7 @@ export default function FoodsPage() {
           >
             All Foods
           </button>
-          {displayedCategories.map((category) => (
+          {menuCategories.map((category) => (
             <button
               key={category._id}
               type="button"
@@ -139,13 +114,6 @@ export default function FoodsPage() {
             </button>
           ))}
         </div>
-        {isLoading && (
-          <div className="mb-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <div key={`food-skeleton-${index}`} className="h-[320px] animate-pulse rounded border border-zinc-200 bg-zinc-100" />
-            ))}
-          </div>
-        )}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {visibleFoods.map((food) => {
             const id = food._id ?? food.fname;

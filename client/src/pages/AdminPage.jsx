@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 
 export default function AdminPage() {
+  const navigate = useNavigate();
   const [overview, setOverview] = useState({ stats: null, users: [], foods: [], orders: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [activeSection, setActiveSection] = useState("users");
-  const [selectedUser, setSelectedUser] = useState(null);
+  const [activeSection, setActiveSection] = useState("dashboard");
   const [actionStatus, setActionStatus] = useState({ type: "", message: "" });
+  const [showLoginBanner, setShowLoginBanner] = useState(true);
 
   const authUser = (() => {
     try {
@@ -38,12 +39,15 @@ export default function AdminPage() {
     loadOverview();
   }, [token, isAdmin]);
 
+  useEffect(() => {
+    if (!showLoginBanner) return undefined;
+    const timer = setTimeout(() => setShowLoginBanner(false), 4000);
+    return () => clearTimeout(timer);
+  }, [showLoginBanner]);
+
   const pendingOrders = overview.orders.filter((order) => order.status === "pending");
   const progressOrders = overview.orders.filter((order) => order.status === "progress");
   const deliveredOrders = overview.orders.filter((order) => order.status === "delivered");
-  const selectedUserOrders = selectedUser
-    ? overview.orders.filter((order) => order.userId?._id === selectedUser._id)
-    : [];
 
   const handleConfirmOrder = async (orderMongoId) => {
     try {
@@ -73,213 +77,221 @@ export default function AdminPage() {
     }
   };
 
+  const handleLogout = () => {
+    sessionStorage.removeItem("authToken");
+    sessionStorage.removeItem("authUser");
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("authUser");
+    navigate("/");
+  };
+
   if (!token || !authUser) return <Navigate to="/" replace />;
   if (!isAdmin) return <Navigate to="/" replace />;
 
+  const sidebarItems = [
+    { id: "dashboard", label: "Dashboard" },
+    { id: "foods", label: "Foods" },
+    { id: "categories", label: "Category" },
+    { id: "orders", label: "Orders" },
+    { id: "about", label: "About" },
+  ];
+
   return (
-    <section className="mx-auto w-full max-w-7xl px-4 py-8 sm:py-10">
-      <h2 className="text-3xl font-semibold text-zinc-800 sm:text-4xl">Admin Dashboard</h2>
-      <p className="mt-2 text-sm text-zinc-600">Manage users, foods, and placed orders.</p>
-
-      {error && <p className="mt-4 rounded border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>}
-      {actionStatus.message && (
-        <p className={`mt-4 rounded border px-3 py-2 text-sm ${actionStatus.type === "error" ? "border-rose-200 bg-rose-50 text-rose-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"}`}>
-          {actionStatus.message}
-        </p>
-      )}
-
-      {loading ? (
-        <p className="mt-6 text-sm text-zinc-600">Loading dashboard...</p>
-      ) : (
-        <>
-          <div className="mt-6 grid gap-4 sm:grid-cols-3">
+    <div className="flex min-h-screen bg-[#ee8a84] text-white">
+      <aside className="flex w-56 shrink-0 flex-col bg-[#c0392b] sm:w-64">
+        <div className="px-5 py-6">
+          <button type="button" className="text-left text-3xl font-semibold tracking-wide" onClick={() => setActiveSection("dashboard")}>
+            Resturant
+          </button>
+        </div>
+        <nav className="mt-2 flex flex-col gap-3 px-3">
+          {sidebarItems.map((item) => (
             <button
+              key={item.id}
               type="button"
-              className={`rounded border p-4 text-left shadow-sm transition ${activeSection === "users" ? "border-rose-300 bg-rose-50" : "border-zinc-200 bg-white hover:border-zinc-300"}`}
-              onClick={() => setActiveSection("users")}
+              className={`rounded-sm bg-black px-4 py-3 text-left text-lg font-medium transition hover:bg-zinc-900 ${
+                activeSection === item.id ? "ring-1 ring-white/80" : ""
+              }`}
+              onClick={() => setActiveSection(item.id)}
             >
-              <p className="text-sm text-zinc-500">Total Users</p>
-              <p className="mt-1 text-2xl font-semibold text-zinc-800">{overview.stats?.totalUsers || 0}</p>
+              {item.label}
+              {activeSection === item.id && <span className="mt-2 block h-px w-full bg-white/90" />}
             </button>
-            <button
-              type="button"
-              className={`rounded border p-4 text-left shadow-sm transition ${activeSection === "foods" ? "border-rose-300 bg-rose-50" : "border-zinc-200 bg-white hover:border-zinc-300"}`}
-              onClick={() => setActiveSection("foods")}
-            >
-              <p className="text-sm text-zinc-500">Total Foods</p>
-              <p className="mt-1 text-2xl font-semibold text-zinc-800">{overview.stats?.totalFoods || 0}</p>
-            </button>
-            <button
-              type="button"
-              className={`rounded border p-4 text-left shadow-sm transition ${activeSection === "orders" ? "border-rose-300 bg-rose-50" : "border-zinc-200 bg-white hover:border-zinc-300"}`}
-              onClick={() => setActiveSection("orders")}
-            >
-              <p className="text-sm text-zinc-500">Total Orders</p>
-              <p className="mt-1 text-2xl font-semibold text-zinc-800">{overview.stats?.totalOrders || 0}</p>
-            </button>
-          </div>
+          ))}
+        </nav>
+      </aside>
 
-          {activeSection === "users" && (
-            <div className="mt-7 rounded border border-zinc-200 bg-white p-4 shadow-sm">
-              <h3 className="text-lg font-semibold text-zinc-800">Users</h3>
-              <p className="mt-1 text-sm text-zinc-600">Click any user account to view full details and total orders.</p>
-              <div className="mt-3 overflow-x-auto">
-                <table className="min-w-full text-left text-sm">
-                  <thead>
-                    <tr className="border-b border-zinc-200 text-zinc-600">
-                      <th className="py-2 pr-4">Name</th>
-                      <th className="py-2 pr-4">Email</th>
-                      <th className="py-2 pr-4">Phone</th>
-                      <th className="py-2 pr-4">Role</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {overview.users.map((user) => (
-                      <tr
-                        key={user._id}
-                        className="cursor-pointer border-b border-zinc-100 transition hover:bg-zinc-50"
-                        onClick={() => setSelectedUser(user)}
-                      >
-                        <td className="py-2 pr-4">{user.name}</td>
-                        <td className="py-2 pr-4">{user.email}</td>
-                        <td className="py-2 pr-4">{user.phone || "-"}</td>
-                        <td className="py-2 pr-4 capitalize">{user.role || "customer"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="flex items-center justify-end gap-5 border-b border-black/20 px-5 py-3 text-sm font-medium sm:gap-8 sm:px-8">
+          <Link to="/" className="transition hover:text-white/80">
+            Home
+          </Link>
+          <Link to="/" className="transition hover:text-white/80">
+            Main Site!
+          </Link>
+          <button type="button" className="transition hover:text-white/80" onClick={() => setActiveSection("about")}>
+            About
+          </button>
+          <button type="button" className="transition hover:text-white/80" onClick={handleLogout}>
+            Logout!
+          </button>
+        </header>
 
-              {selectedUser && (
-                <div className="mt-5 rounded border border-zinc-200 bg-zinc-50 p-4">
-                  <h4 className="text-base font-semibold text-zinc-800">Account Details</h4>
-                  <div className="mt-2 grid gap-2 text-sm text-zinc-700 sm:grid-cols-2">
-                    <p><span className="font-semibold">Name:</span> {selectedUser.name}</p>
-                    <p><span className="font-semibold">Email:</span> {selectedUser.email}</p>
-                    <p><span className="font-semibold">Phone:</span> {selectedUser.phone || "-"}</p>
-                    <p><span className="font-semibold">Role:</span> {selectedUser.role || "customer"}</p>
-                    <p><span className="font-semibold">Total Orders:</span> {selectedUserOrders.length}</p>
-                  </div>
-                  <div className="mt-3">
-                    <p className="text-sm font-semibold text-zinc-800">Orders by this user</p>
-                    {selectedUserOrders.length === 0 ? (
-                      <p className="mt-1 text-sm text-zinc-600">No orders found.</p>
-                    ) : (
-                      <div className="mt-2 space-y-2">
-                        {selectedUserOrders.map((order) => (
-                          <div key={order._id} className="rounded border border-zinc-200 bg-white px-3 py-2 text-sm">
-                            <p><span className="font-semibold">Order ID:</span> {order.orderId}</p>
-                            <p><span className="font-semibold">Food:</span> {order.foodName}</p>
-                            <p><span className="font-semibold">Status:</span> {order.status || "pending"}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
+        <main className="flex-1 px-4 py-6 sm:px-8 sm:py-8">
+          {showLoginBanner && (
+            <p className="mb-5 bg-black/45 px-4 py-2 text-center text-sm font-medium text-white">
+              You have successfully Logged In!
+            </p>
           )}
 
-          {activeSection === "foods" && (
-            <div className="mt-7 rounded border border-zinc-200 bg-white p-4 shadow-sm">
-              <h3 className="text-lg font-semibold text-zinc-800">Foods</h3>
-              <div className="mt-3 overflow-x-auto">
+          {error && <p className="mb-4 rounded bg-black/40 px-3 py-2 text-sm">{error}</p>}
+          {actionStatus.message && (
+            <p className={`mb-4 rounded px-3 py-2 text-sm ${actionStatus.type === "error" ? "bg-black/50" : "bg-emerald-700/70"}`}>
+              {actionStatus.message}
+            </p>
+          )}
+
+          {loading ? (
+            <p className="text-sm text-white/90">Loading dashboard...</p>
+          ) : activeSection === "dashboard" ? (
+            <div className="mx-auto mt-6 flex max-w-4xl flex-col items-center rounded-2xl bg-[#8b1a1a]/55 px-6 py-12 shadow-lg sm:px-10 sm:py-16">
+              <h1 className="mb-10 text-4xl font-semibold tracking-wide sm:text-5xl">Dashboard</h1>
+              <div className="flex w-full flex-col items-stretch justify-center gap-4 sm:flex-row sm:gap-5">
+                {[
+                  { id: "foods", label: "Foods" },
+                  { id: "categories", label: "Categories" },
+                  { id: "orders", label: "Orders" },
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className="min-w-[140px] rounded-xl border border-white bg-linear-to-b from-[#e35d5b] to-[#c0392b] px-8 py-4 text-lg font-semibold shadow-md transition hover:-translate-y-0.5 hover:brightness-110"
+                    onClick={() => setActiveSection(item.id)}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+              <div className="mt-10 grid w-full gap-4 sm:grid-cols-3">
+                <div className="rounded-lg bg-black/25 px-4 py-3 text-center">
+                  <p className="text-xs uppercase tracking-wide text-white/70">Users</p>
+                  <p className="mt-1 text-2xl font-semibold">{overview.stats?.totalUsers || 0}</p>
+                </div>
+                <div className="rounded-lg bg-black/25 px-4 py-3 text-center">
+                  <p className="text-xs uppercase tracking-wide text-white/70">Foods</p>
+                  <p className="mt-1 text-2xl font-semibold">{overview.stats?.totalFoods || 0}</p>
+                </div>
+                <div className="rounded-lg bg-black/25 px-4 py-3 text-center">
+                  <p className="text-xs uppercase tracking-wide text-white/70">Orders</p>
+                  <p className="mt-1 text-2xl font-semibold">{overview.stats?.totalOrders || 0}</p>
+                </div>
+              </div>
+            </div>
+          ) : activeSection === "foods" ? (
+            <section className="rounded-xl bg-[#8b1a1a]/45 p-5 shadow-md">
+              <h2 className="text-2xl font-semibold">Foods</h2>
+              <div className="mt-4 overflow-x-auto">
                 <table className="min-w-full text-left text-sm">
                   <thead>
-                    <tr className="border-b border-zinc-200 text-zinc-600">
+                    <tr className="border-b border-white/30">
                       <th className="py-2 pr-4">Food</th>
                       <th className="py-2 pr-4">Category</th>
                     </tr>
                   </thead>
                   <tbody>
                     {overview.foods.map((food) => (
-                      <tr key={food._id} className="border-b border-zinc-100">
+                      <tr key={food._id} className="border-b border-white/15">
                         <td className="py-2 pr-4">{food.fname}</td>
                         <td className="py-2 pr-4">{food.categoryId?.name || "-"}</td>
                       </tr>
                     ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {activeSection === "orders" && (
-            <div className="mt-7 rounded border border-zinc-200 bg-white p-4 shadow-sm">
-              <h3 className="text-lg font-semibold text-zinc-800">Recent Pending Orders</h3>
-              <p className="mt-1 text-sm text-zinc-600">Only pending orders are shown here. Click confirm to move them to progress.</p>
-              <div className="mt-3 overflow-x-auto">
-                <table className="min-w-full text-left text-sm">
-                  <thead>
-                    <tr className="border-b border-zinc-200 text-zinc-600">
-                      <th className="py-2 pr-4">Order ID</th>
-                      <th className="py-2 pr-4">Food</th>
-                      <th className="py-2 pr-4">Customer</th>
-                      <th className="py-2 pr-4">Email</th>
-                      <th className="py-2 pr-4">Status</th>
-                      <th className="py-2 pr-4">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pendingOrders.map((order) => (
-                      <tr key={order._id} className="border-b border-zinc-100">
-                        <td className="py-2 pr-4">{order.orderId}</td>
-                        <td className="py-2 pr-4">{order.foodName}</td>
-                        <td className="py-2 pr-4">{order.userId?.name || "-"}</td>
-                        <td className="py-2 pr-4">{order.userId?.email || "-"}</td>
-                        <td className="py-2 pr-4 capitalize">{order.status || "pending"}</td>
-                        <td className="py-2 pr-4">
-                          <button
-                            type="button"
-                            className="rounded bg-emerald-600 px-3 py-1 text-xs font-semibold text-white transition hover:bg-emerald-700"
-                            onClick={() => handleConfirmOrder(order._id)}
-                          >
-                            Confirm
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                    {pendingOrders.length === 0 && (
+                    {overview.foods.length === 0 && (
                       <tr>
-                        <td className="py-3 text-sm text-zinc-500" colSpan={6}>
-                          No pending orders right now.
+                        <td className="py-3 text-white/80" colSpan={2}>
+                          No foods in database yet. Customers still see the local menu images.
                         </td>
                       </tr>
                     )}
                   </tbody>
                 </table>
               </div>
-
-              <div className="mt-8">
-                <h3 className="text-lg font-semibold text-zinc-800">In Progress Orders</h3>
-                <p className="mt-1 text-sm text-zinc-600">These are confirmed orders currently in progress.</p>
+            </section>
+          ) : activeSection === "categories" ? (
+            <section className="rounded-xl bg-[#8b1a1a]/45 p-5 shadow-md">
+              <h2 className="text-2xl font-semibold">Categories</h2>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {["Italian", "Chinese", "Snacks", "Bangladeshi", "Thai"].map((name) => (
+                  <div key={name} className="rounded-lg border border-white/30 bg-black/20 px-4 py-5 text-center text-lg font-medium">
+                    {name}
+                  </div>
+                ))}
+              </div>
+            </section>
+          ) : activeSection === "orders" ? (
+            <section className="space-y-6 rounded-xl bg-[#8b1a1a]/45 p-5 shadow-md">
+              <div>
+                <h2 className="text-2xl font-semibold">Pending Orders</h2>
                 <div className="mt-3 overflow-x-auto">
                   <table className="min-w-full text-left text-sm">
                     <thead>
-                      <tr className="border-b border-zinc-200 text-zinc-600">
+                      <tr className="border-b border-white/30">
                         <th className="py-2 pr-4">Order ID</th>
                         <th className="py-2 pr-4">Food</th>
                         <th className="py-2 pr-4">Customer</th>
-                        <th className="py-2 pr-4">Email</th>
-                        <th className="py-2 pr-4">Status</th>
+                        <th className="py-2 pr-4">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pendingOrders.map((order) => (
+                        <tr key={order._id} className="border-b border-white/15">
+                          <td className="py-2 pr-4">{order.orderId}</td>
+                          <td className="py-2 pr-4">{order.foodName}</td>
+                          <td className="py-2 pr-4">{order.userId?.name || "-"}</td>
+                          <td className="py-2 pr-4">
+                            <button
+                              type="button"
+                              className="rounded bg-emerald-600 px-3 py-1 text-xs font-semibold hover:bg-emerald-700"
+                              onClick={() => handleConfirmOrder(order._id)}
+                            >
+                              Confirm
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                      {pendingOrders.length === 0 && (
+                        <tr>
+                          <td className="py-3 text-white/80" colSpan={4}>
+                            No pending orders.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div>
+                <h2 className="text-xl font-semibold">In Progress</h2>
+                <div className="mt-3 overflow-x-auto">
+                  <table className="min-w-full text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-white/30">
+                        <th className="py-2 pr-4">Order ID</th>
+                        <th className="py-2 pr-4">Food</th>
+                        <th className="py-2 pr-4">Customer</th>
                         <th className="py-2 pr-4">Action</th>
                       </tr>
                     </thead>
                     <tbody>
                       {progressOrders.map((order) => (
-                        <tr key={order._id} className="border-b border-zinc-100">
+                        <tr key={order._id} className="border-b border-white/15">
                           <td className="py-2 pr-4">{order.orderId}</td>
                           <td className="py-2 pr-4">{order.foodName}</td>
                           <td className="py-2 pr-4">{order.userId?.name || "-"}</td>
-                          <td className="py-2 pr-4">{order.userId?.email || "-"}</td>
-                          <td className="py-2 pr-4">
-                            <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">progress</span>
-                          </td>
                           <td className="py-2 pr-4">
                             <button
                               type="button"
-                              className="rounded bg-blue-600 px-3 py-1 text-xs font-semibold text-white transition hover:bg-blue-700"
+                              className="rounded bg-blue-600 px-3 py-1 text-xs font-semibold hover:bg-blue-700"
                               onClick={() => handleDeliverOrder(order._id)}
                             >
                               Delivered
@@ -289,8 +301,8 @@ export default function AdminPage() {
                       ))}
                       {progressOrders.length === 0 && (
                         <tr>
-                          <td className="py-3 text-sm text-zinc-500" colSpan={6}>
-                            No in-progress orders yet.
+                          <td className="py-3 text-white/80" colSpan={4}>
+                            No in-progress orders.
                           </td>
                         </tr>
                       )}
@@ -299,35 +311,28 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              <div className="mt-8">
-                <h3 className="text-lg font-semibold text-zinc-800">Delivered Orders</h3>
-                <p className="mt-1 text-sm text-zinc-600">Orders that are fully delivered.</p>
+              <div>
+                <h2 className="text-xl font-semibold">Delivered</h2>
                 <div className="mt-3 overflow-x-auto">
                   <table className="min-w-full text-left text-sm">
                     <thead>
-                      <tr className="border-b border-zinc-200 text-zinc-600">
+                      <tr className="border-b border-white/30">
                         <th className="py-2 pr-4">Order ID</th>
                         <th className="py-2 pr-4">Food</th>
                         <th className="py-2 pr-4">Customer</th>
-                        <th className="py-2 pr-4">Email</th>
-                        <th className="py-2 pr-4">Status</th>
                       </tr>
                     </thead>
                     <tbody>
                       {deliveredOrders.map((order) => (
-                        <tr key={order._id} className="border-b border-zinc-100">
+                        <tr key={order._id} className="border-b border-white/15">
                           <td className="py-2 pr-4">{order.orderId}</td>
                           <td className="py-2 pr-4">{order.foodName}</td>
                           <td className="py-2 pr-4">{order.userId?.name || "-"}</td>
-                          <td className="py-2 pr-4">{order.userId?.email || "-"}</td>
-                          <td className="py-2 pr-4">
-                            <span className="rounded bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">delivered</span>
-                          </td>
                         </tr>
                       ))}
                       {deliveredOrders.length === 0 && (
                         <tr>
-                          <td className="py-3 text-sm text-zinc-500" colSpan={5}>
+                          <td className="py-3 text-white/80" colSpan={3}>
                             No delivered orders yet.
                           </td>
                         </tr>
@@ -336,10 +341,18 @@ export default function AdminPage() {
                   </table>
                 </div>
               </div>
-            </div>
+            </section>
+          ) : (
+            <section className="rounded-xl bg-[#8b1a1a]/45 p-6 shadow-md">
+              <h2 className="text-2xl font-semibold">About Admin Panel</h2>
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-white/90">
+                Manage restaurant foods, categories, and customer orders from this dashboard. Use the sidebar or the
+                dashboard buttons to switch sections. Click <strong>Main Site!</strong> to return to the public website.
+              </p>
+            </section>
           )}
-        </>
-      )}
-    </section>
+        </main>
+      </div>
+    </div>
   );
 }

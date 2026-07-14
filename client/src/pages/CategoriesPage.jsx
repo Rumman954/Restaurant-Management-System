@@ -1,15 +1,11 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api } from "../lib/api";
 
 export default function CategoriesPage() {
   const navigate = useNavigate();
-  const [categories, setCategories] = useState([]);
   const [expandedCategory, setExpandedCategory] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState("");
 
-  const fallbackCategories = [
+  const categories = [
     {
       _id: "italian",
       name: "Italian",
@@ -42,53 +38,28 @@ export default function CategoriesPage() {
     },
   ];
 
-  useEffect(() => {
-    setIsLoading(true);
-    api
-      .get("/categories")
-      .then((res) => {
-        setCategories(res.data);
-        setLoadError("");
-      })
-      .catch(() => {
-        setCategories([]);
-        setLoadError("Could not load categories from server. Showing fallback categories.");
-      })
-      .finally(() => setIsLoading(false));
-  }, []);
-
-  const displayedCategories = categories.length > 0 ? categories : fallbackCategories;
-
   return (
     <main className="mx-auto max-w-6xl px-4 py-10 sm:py-12">
       <h1 className="mb-8 text-center text-4xl font-medium text-zinc-800 sm:text-5xl">Categories</h1>
-      {loadError && <p className="mb-5 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">{loadError}</p>}
-      {isLoading && (
-        <div className="mb-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, index) => (
-            <div key={`category-skeleton-${index}`} className="h-[265px] animate-pulse rounded border border-zinc-200 bg-zinc-100" />
-          ))}
-        </div>
-      )}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {displayedCategories.map((category) => {
-          const id = category._id ?? category.name;
-          const summary = category.longDesc ?? "This is a popular category of Bangladesh. Explore the Foods of this category!";
-          const image = category.image ?? "/images/Snacks.jpg";
+        {categories.map((category) => {
+          const id = category._id;
+          const summary = category.longDesc;
+          const image = category.image;
           const isExpanded = expandedCategory === id;
 
           return (
             <button
               key={id}
               type="button"
-              className="group h-[265px] w-full [perspective:1000px] transition-transform duration-300 hover:-translate-y-1"
+              className="group h-[265px] w-full perspective-[1000px] transition-transform duration-300 hover:-translate-y-1"
               onClick={() => navigate(`/foods?category=${id}`)}
             >
               <div
-                className="relative h-full w-full rounded border border-zinc-200 transition-transform duration-700 group-hover:shadow-lg [transform-style:preserve-3d]"
+                className="relative h-full w-full rounded border border-zinc-200 transition-transform duration-700 group-hover:shadow-lg transform-3d"
                 style={{ transform: isExpanded ? "rotateY(180deg)" : "rotateY(0deg)" }}
               >
-                <article className="absolute inset-0 overflow-hidden rounded bg-white shadow-sm [backface-visibility:hidden]">
+                <article className="absolute inset-0 overflow-hidden rounded bg-white shadow-sm backface-hidden">
                   <img
                     src={image}
                     alt={category.name}
@@ -113,7 +84,7 @@ export default function CategoriesPage() {
                   </div>
                 </article>
 
-                <article className="absolute inset-0 flex h-full flex-col rounded bg-white p-4 shadow-sm [backface-visibility:hidden] [transform:rotateY(180deg)]">
+                <article className="absolute inset-0 flex h-full flex-col rounded bg-white p-4 shadow-sm backface-hidden transform-[rotateY(180deg)]">
                   <div className="flex items-start justify-between gap-3">
                     <h3 className="text-2xl font-normal sm:text-3xl">{category.name}</h3>
                     <button
