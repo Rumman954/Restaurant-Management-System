@@ -40,7 +40,7 @@ export default function CategoriesPage() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-10 sm:py-12">
-      <h1 className="mb-8 text-center text-4xl font-medium text-zinc-800 sm:text-5xl">Categories</h1>
+      <h1 className="mb-8 text-center text-4xl font-medium text-zinc-800 dark:text-zinc-300 sm:text-5xl">Categories</h1>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {categories.map((category) => {
           const id = category._id;
@@ -52,25 +52,27 @@ export default function CategoriesPage() {
             <button
               key={id}
               type="button"
-              className="group h-[265px] w-full perspective-[1000px] transition-transform duration-300 hover:-translate-y-1"
+              className="group h-[280px] w-full perspective-[1000px] transition-transform duration-300 hover:-translate-y-1"
               onClick={() => navigate(`/foods?category=${id}`)}
             >
               <div
-                className="relative h-full w-full rounded border border-zinc-200 transition-transform duration-700 group-hover:shadow-lg transform-3d"
+                className="relative h-full w-full rounded border border-zinc-200 dark:border-zinc-700 transition-transform duration-700 group-hover:shadow-lg transform-3d"
                 style={{ transform: isExpanded ? "rotateY(180deg)" : "rotateY(0deg)" }}
               >
-                <article className="absolute inset-0 overflow-hidden rounded bg-white shadow-sm backface-hidden">
-                  <img
-                    src={image}
-                    alt={category.name}
-                    className="h-32 w-full object-cover transition-transform duration-500 group-hover:scale-105 sm:h-36"
-                  />
+                <article className="absolute inset-0 overflow-hidden rounded bg-white shadow-sm backface-hidden dark:bg-zinc-900">
+                  <div className="food-media-frame h-36 sm:h-40">
+                    <img
+                      src={image}
+                      alt={category.name}
+                      className="food-media transition-transform duration-500 group-hover:scale-[1.03]"
+                    />
+                  </div>
                   <div className="p-4">
                     <div className="flex items-start justify-between gap-3">
                       <h3 className="text-2xl font-normal sm:text-3xl">{category.name}</h3>
                       <button
                         type="button"
-                        className="text-xl leading-none text-zinc-700 transition hover:text-zinc-900"
+                        className="text-xl leading-none text-zinc-700 dark:text-zinc-300 transition hover:text-zinc-900 dark:hover:text-white"
                         onClick={(event) => {
                           event.stopPropagation();
                           setExpandedCategory(id);
@@ -80,16 +82,16 @@ export default function CategoriesPage() {
                         ⋮
                       </button>
                     </div>
-                    <p className="mt-2 text-sm leading-6 text-zinc-600">{summary}</p>
+                    <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">{summary}</p>
                   </div>
                 </article>
 
-                <article className="absolute inset-0 flex h-full flex-col rounded bg-white p-4 shadow-sm backface-hidden transform-[rotateY(180deg)]">
+                <article className="absolute inset-0 flex h-full flex-col rounded bg-white dark:bg-zinc-900 p-4 shadow-sm backface-hidden transform-[rotateY(180deg)]">
                   <div className="flex items-start justify-between gap-3">
                     <h3 className="text-2xl font-normal sm:text-3xl">{category.name}</h3>
                     <button
                       type="button"
-                      className="text-lg text-zinc-600 transition hover:text-zinc-900"
+                      className="text-lg text-zinc-600 dark:text-zinc-400 transition hover:text-zinc-900 dark:hover:text-white"
                       onClick={(event) => {
                         event.stopPropagation();
                         setExpandedCategory(null);
@@ -99,7 +101,7 @@ export default function CategoriesPage() {
                       ×
                     </button>
                   </div>
-                  <p className="mt-3 text-sm leading-6 text-zinc-600">{summary}</p>
+                  <p className="mt-3 text-sm leading-6 text-zinc-600 dark:text-zinc-400">{summary}</p>
                 </article>
               </div>
             </button>

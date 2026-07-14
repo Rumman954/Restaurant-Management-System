@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
+import { useTheme } from "../context/ThemeContext";
 
 export default function Navbar() {
   const navigate = useNavigate();
+  const { isDark, toggleTheme } = useTheme();
   const getStoredUser = () => {
     try {
       const stored = sessionStorage.getItem("authUser");
@@ -335,7 +337,7 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-rose-300 bg-[#ee6e73] text-white shadow-sm">
+      <header className="brand-bar sticky top-0 z-40 border-b text-white shadow-sm">
         <nav className="relative mx-auto flex h-16 w-full max-w-7xl items-center justify-center px-4 sm:px-6 lg:justify-between lg:px-8">
         <Link
           to="/"
@@ -351,7 +353,7 @@ export default function Navbar() {
               <button
                 key={item.label}
                 type="button"
-                className="rounded-md px-2 py-1 text-white/95 transition-colors duration-200 hover:bg-[#e35f66] hover:text-white active:bg-[#d8565d]"
+                className="brand-bar-link rounded-md px-2 py-1 text-white/95 transition-colors duration-200 hover:text-white"
                 onClick={() => setIsContactOpen(true)}
               >
                 {item.label}
@@ -360,7 +362,7 @@ export default function Navbar() {
               <Link
                 key={item.label}
                 to={item.to}
-                className="rounded-md px-2 py-1 text-white/95 transition-colors duration-200 hover:bg-[#e35f66] hover:text-white active:bg-[#d8565d]"
+                className="brand-bar-link rounded-md px-2 py-1 text-white/95 transition-colors duration-200 hover:text-white"
                 onClick={item.label === "Home" ? goToHomeTop : undefined}
               >
                 {item.label}
@@ -370,6 +372,14 @@ export default function Navbar() {
           </div>
 
         <div className="hidden items-center gap-3 lg:flex">
+          <button
+            type="button"
+            className="rounded-full border border-white/80 px-3 py-2 text-sm font-semibold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-white/10"
+            onClick={toggleTheme}
+            aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {isDark ? "☀ Light" : "☾ Dark"}
+          </button>
           {authUser && (
             <button
               type="button"
@@ -442,12 +452,22 @@ export default function Navbar() {
             className="absolute inset-0 bg-black/70"
             onClick={() => setIsMenuOpen(false)}
           />
-          <aside className="relative h-full w-[250px] bg-white px-5 py-6 shadow-2xl">
+          <aside className="relative h-full w-[250px] bg-white px-5 py-6 shadow-2xl dark:bg-zinc-900">
             <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                className="rounded-md px-3 py-2 text-left text-base font-semibold text-zinc-700 transition hover:bg-rose-50 dark:text-zinc-400 dark:hover:bg-rose-950/40"
+                onClick={() => {
+                  toggleTheme();
+                  setIsMenuOpen(false);
+                }}
+              >
+                {isDark ? "☀ Light Mode" : "☾ Dark Mode"}
+              </button>
               {authUser && (
                 <button
                   type="button"
-                  className="rounded-md px-3 py-2 text-left text-base font-semibold text-zinc-700 transition hover:bg-rose-50"
+                  className="rounded-md px-3 py-2 text-left text-base font-semibold text-zinc-700 dark:text-zinc-300 transition hover:bg-rose-50"
                   onClick={openProfileModal}
                 >
                   Hi, {surname || authUser.name}
@@ -458,7 +478,7 @@ export default function Navbar() {
                   <button
                     key={item.label}
                     type="button"
-                    className="rounded-md px-3 py-2 text-left text-base font-medium text-zinc-700 transition-colors duration-200 hover:bg-rose-50 hover:text-zinc-800 active:bg-rose-200 active:text-rose-800 focus-visible:bg-rose-50 focus-visible:text-zinc-800 [-webkit-tap-highlight-color:transparent]"
+                    className="rounded-md px-3 py-2 text-left text-base font-medium text-zinc-700 dark:text-zinc-300 transition-colors duration-200 hover:bg-rose-50 hover:text-zinc-800 dark:text-zinc-300 active:bg-rose-200 active:text-rose-800 focus-visible:bg-rose-50 focus-visible:text-zinc-800 dark:text-zinc-300 [-webkit-tap-highlight-color:transparent]"
                     onClick={() => {
                       setIsMenuOpen(false);
                       setIsContactOpen(true);
@@ -470,7 +490,7 @@ export default function Navbar() {
                   <button
                     key={item.label}
                     type="button"
-                    className="rounded-md px-3 py-2 text-left text-base font-medium text-zinc-700 transition-colors duration-200 hover:bg-rose-50 hover:text-zinc-800 active:bg-rose-200 active:text-rose-800 focus-visible:bg-rose-50 focus-visible:text-zinc-800 [-webkit-tap-highlight-color:transparent]"
+                    className="rounded-md px-3 py-2 text-left text-base font-medium text-zinc-700 dark:text-zinc-300 transition-colors duration-200 hover:bg-rose-50 hover:text-zinc-800 dark:text-zinc-300 active:bg-rose-200 active:text-rose-800 focus-visible:bg-rose-50 focus-visible:text-zinc-800 dark:text-zinc-300 [-webkit-tap-highlight-color:transparent]"
                     onClick={() => {
                       setIsMenuOpen(false);
                       openLoginModal();
@@ -482,7 +502,7 @@ export default function Navbar() {
                   <button
                     key={item.label}
                     type="button"
-                    className="rounded-md px-3 py-2 text-left text-base font-medium text-zinc-700 transition-colors duration-200 hover:bg-rose-50 hover:text-zinc-800 active:bg-rose-200 active:text-rose-800 focus-visible:bg-rose-50 focus-visible:text-zinc-800 [-webkit-tap-highlight-color:transparent]"
+                    className="rounded-md px-3 py-2 text-left text-base font-medium text-zinc-700 dark:text-zinc-300 transition-colors duration-200 hover:bg-rose-50 hover:text-zinc-800 dark:text-zinc-300 active:bg-rose-200 active:text-rose-800 focus-visible:bg-rose-50 focus-visible:text-zinc-800 dark:text-zinc-300 [-webkit-tap-highlight-color:transparent]"
                     onClick={() => {
                       setIsMenuOpen(false);
                       openRegisterModal();
@@ -494,7 +514,7 @@ export default function Navbar() {
                   <button
                     key={item.label}
                     type="button"
-                    className="rounded-md px-3 py-2 text-left text-base font-medium text-zinc-700 transition-colors duration-200 hover:bg-rose-50 hover:text-zinc-800 active:bg-rose-200 active:text-rose-800 focus-visible:bg-rose-50 focus-visible:text-zinc-800 [-webkit-tap-highlight-color:transparent]"
+                    className="rounded-md px-3 py-2 text-left text-base font-medium text-zinc-700 dark:text-zinc-300 transition-colors duration-200 hover:bg-rose-50 hover:text-zinc-800 dark:text-zinc-300 active:bg-rose-200 active:text-rose-800 focus-visible:bg-rose-50 focus-visible:text-zinc-800 dark:text-zinc-300 [-webkit-tap-highlight-color:transparent]"
                     onClick={handleLogout}
                   >
                     {item.label}
@@ -503,7 +523,7 @@ export default function Navbar() {
                   <Link
                     key={item.label}
                     to={item.to}
-                    className="rounded-md px-3 py-2 text-base font-medium text-zinc-700 transition-colors duration-200 hover:bg-rose-50 hover:text-zinc-800 active:bg-rose-200 active:text-rose-800 focus-visible:bg-rose-50 focus-visible:text-zinc-800 [-webkit-tap-highlight-color:transparent]"
+                    className="rounded-md px-3 py-2 text-base font-medium text-zinc-700 dark:text-zinc-300 transition-colors duration-200 hover:bg-rose-50 hover:text-zinc-800 dark:text-zinc-300 active:bg-rose-200 active:text-rose-800 focus-visible:bg-rose-50 focus-visible:text-zinc-800 dark:text-zinc-300 [-webkit-tap-highlight-color:transparent]"
                     onClick={item.label === "Home" ? goToHomeTop : () => setIsMenuOpen(false)}
                   >
                     {item.label}
@@ -517,8 +537,8 @@ export default function Navbar() {
 
       {isRegisterOpen && (
         <div className="fixed inset-0 z-50 bg-black/45 px-4 py-6 sm:py-10">
-          <div className="mx-auto w-full max-w-5xl bg-white p-6 shadow-xl sm:p-8">
-            <h2 className="text-center text-4xl font-normal text-zinc-800 sm:text-5xl">Register Here!</h2>
+          <div className="mx-auto w-full max-w-5xl bg-white dark:bg-zinc-900 p-6 shadow-xl sm:p-8">
+            <h2 className="text-center text-4xl font-normal text-zinc-800 dark:text-zinc-300 sm:text-5xl">Register Here!</h2>
             <p className="mt-3 text-center text-lg font-normal text-[#bf3f45] sm:text-xl">Don't leave the fields blank!</p>
 
             <form className="mt-9" onSubmit={handleRegisterSubmit} noValidate>
@@ -532,8 +552,8 @@ export default function Navbar() {
                     setRegisterErrors((prev) => ({ ...prev, fullName: "" }));
                     setRegisterStatus({ type: "", message: "" });
                   }}
-                  className={`w-full border-0 border-b px-1 py-2 text-zinc-800 outline-none placeholder:text-zinc-400 focus:border-zinc-500 ${
-                    registerErrors.fullName ? "border-rose-500" : "border-zinc-300"
+                  className={`w-full border-0 border-b px-1 py-2 text-zinc-800 dark:text-zinc-300 outline-none placeholder:text-zinc-400 focus:border-zinc-500 ${
+                    registerErrors.fullName ? "border-rose-500" : "border-zinc-300 dark:border-zinc-600"
                   }`}
                 />
                 {registerErrors.fullName && <p className="mt-1 text-xs text-rose-600">{registerErrors.fullName}</p>}
@@ -549,8 +569,8 @@ export default function Navbar() {
                     setRegisterErrors((prev) => ({ ...prev, email: "" }));
                     setRegisterStatus({ type: "", message: "" });
                   }}
-                  className={`w-full border-0 border-b px-1 py-2 text-zinc-800 outline-none placeholder:text-zinc-400 focus:border-zinc-500 ${
-                    registerErrors.email ? "border-rose-500" : "border-zinc-300"
+                  className={`w-full border-0 border-b px-1 py-2 text-zinc-800 dark:text-zinc-300 outline-none placeholder:text-zinc-400 focus:border-zinc-500 ${
+                    registerErrors.email ? "border-rose-500" : "border-zinc-300 dark:border-zinc-600"
                   }`}
                 />
                 {registerErrors.email && <p className="mt-1 text-xs text-rose-600">{registerErrors.email}</p>}
@@ -565,7 +585,7 @@ export default function Navbar() {
                     setRegisterForm((prev) => ({ ...prev, phone: event.target.value }));
                     setRegisterStatus({ type: "", message: "" });
                   }}
-                  className="w-full border-0 border-b border-zinc-300 px-1 py-2 text-zinc-800 outline-none placeholder:text-zinc-400 focus:border-zinc-500"
+                  className="w-full border-0 border-b border-zinc-300 dark:border-zinc-600 px-1 py-2 text-zinc-800 dark:text-zinc-300 outline-none placeholder:text-zinc-400 focus:border-zinc-500"
                 />
               </div>
 
@@ -578,7 +598,7 @@ export default function Navbar() {
                     setRegisterForm((prev) => ({ ...prev, address: event.target.value }));
                     setRegisterStatus({ type: "", message: "" });
                   }}
-                  className="w-full border-0 border-b border-zinc-300 px-1 py-2 text-zinc-800 outline-none placeholder:text-zinc-400 focus:border-zinc-500"
+                  className="w-full border-0 border-b border-zinc-300 dark:border-zinc-600 px-1 py-2 text-zinc-800 dark:text-zinc-300 outline-none placeholder:text-zinc-400 focus:border-zinc-500"
                 />
               </div>
 
@@ -594,13 +614,13 @@ export default function Navbar() {
                         setRegisterErrors((prev) => ({ ...prev, password: "" }));
                         setRegisterStatus({ type: "", message: "" });
                       }}
-                      className={`w-full border-0 border-b px-1 py-2 pr-9 text-zinc-800 outline-none placeholder:text-zinc-400 focus:border-zinc-500 ${
-                        registerErrors.password ? "border-rose-500" : "border-zinc-300"
+                      className={`w-full border-0 border-b px-1 py-2 pr-9 text-zinc-800 dark:text-zinc-300 outline-none placeholder:text-zinc-400 focus:border-zinc-500 ${
+                        registerErrors.password ? "border-rose-500" : "border-zinc-300 dark:border-zinc-600"
                       }`}
                     />
                     <button
                       type="button"
-                      className="absolute right-1 top-1/2 -translate-y-1/2 text-zinc-500 transition hover:text-zinc-700"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 text-zinc-500 dark:text-zinc-400 transition hover:text-zinc-700 dark:text-zinc-300"
                       onClick={() => setShowRegisterPassword((prev) => !prev)}
                       aria-label={showRegisterPassword ? "Hide password" : "Show password"}
                     >
@@ -624,13 +644,13 @@ export default function Navbar() {
                         setRegisterErrors((prev) => ({ ...prev, confirmPassword: "" }));
                         setRegisterStatus({ type: "", message: "" });
                       }}
-                      className={`w-full border-0 border-b px-1 py-2 pr-9 text-zinc-800 outline-none placeholder:text-zinc-400 focus:border-zinc-500 ${
-                        registerErrors.confirmPassword ? "border-rose-500" : "border-zinc-300"
+                      className={`w-full border-0 border-b px-1 py-2 pr-9 text-zinc-800 dark:text-zinc-300 outline-none placeholder:text-zinc-400 focus:border-zinc-500 ${
+                        registerErrors.confirmPassword ? "border-rose-500" : "border-zinc-300 dark:border-zinc-600"
                       }`}
                     />
                     <button
                       type="button"
-                      className="absolute right-1 top-1/2 -translate-y-1/2 text-zinc-500 transition hover:text-zinc-700"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 text-zinc-500 dark:text-zinc-400 transition hover:text-zinc-700 dark:text-zinc-300"
                       onClick={() => setShowRegisterConfirmPassword((prev) => !prev)}
                       aria-label={showRegisterConfirmPassword ? "Hide password" : "Show password"}
                     >
@@ -656,13 +676,13 @@ export default function Navbar() {
               <div className="mt-10 flex items-center justify-center gap-3">
                 <button
                   type="submit"
-                  className="rounded-sm bg-[#ee6e73] px-6 py-2 text-sm font-semibold uppercase tracking-wide text-white transition-colors duration-200 hover:bg-[#e35f66] active:bg-[#d8565d]"
+                  className="brand-btn rounded-sm px-6 py-2 text-sm font-semibold uppercase tracking-wide transition-colors duration-200"
                 >
                   Register
                 </button>
                 <button
                   type="button"
-                  className="rounded-sm px-4 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900"
+                  className="rounded-sm px-4 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-600 dark:text-zinc-400 transition hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white"
                   onClick={closeRegisterModal}
                 >
                   Close
@@ -675,9 +695,9 @@ export default function Navbar() {
 
       {isLoginOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 px-4 py-8 sm:py-12">
-          <div className="mx-auto w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl sm:p-8">
-            <h2 className="text-center text-3xl font-semibold text-zinc-800">Welcome Back</h2>
-            <p className="mt-2 text-center text-sm text-zinc-500">Login to continue ordering your favorite food.</p>
+          <div className="mx-auto w-full max-w-md rounded-2xl bg-white dark:bg-zinc-900 p-6 shadow-2xl sm:p-8">
+            <h2 className="text-center text-3xl font-semibold text-zinc-800 dark:text-zinc-300">Welcome Back</h2>
+            <p className="mt-2 text-center text-sm text-zinc-500 dark:text-zinc-400">Login to continue ordering your favorite food.</p>
 
             <form className="mt-7" onSubmit={handleLoginSubmit} noValidate>
               <div>
@@ -694,8 +714,8 @@ export default function Navbar() {
                     setFieldErrors((prev) => ({ ...prev, email: "" }));
                     setLoginStatus({ type: "", message: "" });
                   }}
-                  className={`w-full rounded-lg border px-3 py-2.5 text-zinc-800 outline-none placeholder:text-zinc-400 focus:ring-2 ${
-                    fieldErrors.email ? "border-rose-500 focus:ring-rose-100" : "border-zinc-300 focus:border-rose-400 focus:ring-rose-100"
+                  className={`w-full rounded-lg border px-3 py-2.5 text-zinc-800 dark:text-zinc-300 outline-none placeholder:text-zinc-400 focus:ring-2 ${
+                    fieldErrors.email ? "border-rose-500 focus:ring-rose-100" : "border-zinc-300 dark:border-zinc-600 focus:border-rose-400 focus:ring-rose-100"
                   }`}
                 />
                 {fieldErrors.email && <p className="mt-1 text-xs text-rose-600">{fieldErrors.email}</p>}
@@ -715,13 +735,13 @@ export default function Navbar() {
                       setFieldErrors((prev) => ({ ...prev, password: "" }));
                       setLoginStatus({ type: "", message: "" });
                     }}
-                    className={`w-full rounded-lg border px-3 py-2.5 pr-10 text-zinc-800 outline-none placeholder:text-zinc-400 focus:ring-2 ${
-                      fieldErrors.password ? "border-rose-500 focus:ring-rose-100" : "border-zinc-300 focus:border-rose-400 focus:ring-rose-100"
+                    className={`w-full rounded-lg border px-3 py-2.5 pr-10 text-zinc-800 dark:text-zinc-300 outline-none placeholder:text-zinc-400 focus:ring-2 ${
+                      fieldErrors.password ? "border-rose-500 focus:ring-rose-100" : "border-zinc-300 dark:border-zinc-600 focus:border-rose-400 focus:ring-rose-100"
                     }`}
                   />
                   <button
                     type="button"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 transition hover:text-zinc-700"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 dark:text-zinc-400 transition hover:text-zinc-700 dark:text-zinc-300"
                     onClick={() => setShowLoginPassword((prev) => !prev)}
                     aria-label={showLoginPassword ? "Hide password" : "Show password"}
                   >
@@ -744,13 +764,13 @@ export default function Navbar() {
               <div className="mt-7 flex items-center justify-center gap-3">
                 <button
                   type="submit"
-                  className="rounded-md bg-[#ee6e73] px-6 py-2.5 text-xs font-semibold uppercase tracking-wide text-white transition-colors duration-200 hover:bg-[#e35f66] active:bg-[#d8565d]"
+                  className="brand-btn rounded-md px-6 py-2.5 text-xs font-semibold uppercase tracking-wide transition-colors duration-200"
                 >
                   Login
                 </button>
                 <button
                   type="button"
-                  className="rounded-md px-4 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900"
+                  className="rounded-md px-4 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-600 dark:text-zinc-400 transition hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white"
                   onClick={closeLoginModal}
                 >
                   Close
@@ -766,7 +786,7 @@ export default function Navbar() {
 
             <button
               type="button"
-              className="flex w-full items-center justify-center gap-2 rounded-md border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
+              className="flex w-full items-center justify-center gap-2 rounded-md border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
               onClick={() => setLoginStatus({ type: "error", message: "Google login is coming soon." })}
             >
               <svg viewBox="0 0 48 48" className="h-5 w-5" aria-hidden="true">
@@ -790,7 +810,7 @@ export default function Navbar() {
               Continue with Google
             </button>
 
-            <p className="mt-5 text-center text-sm text-zinc-600">
+            <p className="mt-5 text-center text-sm text-zinc-600 dark:text-zinc-400">
               If you don&apos;t have account{" "}
               <button
                 type="button"
@@ -806,80 +826,80 @@ export default function Navbar() {
 
       {isProfileOpen && (
         <div className="fixed inset-0 z-50 bg-black/45 px-4 py-8 sm:py-12">
-          <div className="mx-auto w-full max-w-3xl rounded bg-white p-6 shadow-xl sm:p-8">
-            <h2 className="text-center text-3xl font-semibold text-zinc-800">Customer Details</h2>
+          <div className="mx-auto w-full max-w-3xl rounded bg-white dark:bg-zinc-900 p-6 shadow-xl sm:p-8">
+            <h2 className="text-center text-3xl font-semibold text-zinc-800 dark:text-zinc-300">Customer Details</h2>
 
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Name</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Name</p>
                 {isProfileEditing ? (
                   <input
                     type="text"
                     value={profileForm.name}
                     onChange={(event) => setProfileForm((prev) => ({ ...prev, name: event.target.value }))}
-                    className="mt-1 w-full rounded border border-zinc-300 px-3 py-2 text-sm text-zinc-800 outline-none focus:border-zinc-500"
+                    className="mt-1 w-full rounded border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm text-zinc-800 dark:text-zinc-300 outline-none focus:border-zinc-500"
                   />
                 ) : (
-                  <p className="mt-1 text-sm text-zinc-800">{authUser?.name || "-"}</p>
+                  <p className="mt-1 text-sm text-zinc-800 dark:text-zinc-300">{authUser?.name || "-"}</p>
                 )}
               </div>
 
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Email</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Email</p>
                 {isProfileEditing ? (
                   <input
                     type="email"
                     value={profileForm.email}
                     onChange={(event) => setProfileForm((prev) => ({ ...prev, email: event.target.value }))}
-                    className="mt-1 w-full rounded border border-zinc-300 px-3 py-2 text-sm text-zinc-800 outline-none focus:border-zinc-500"
+                    className="mt-1 w-full rounded border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm text-zinc-800 dark:text-zinc-300 outline-none focus:border-zinc-500"
                   />
                 ) : (
-                  <p className="mt-1 text-sm text-zinc-800">{authUser?.email || "-"}</p>
+                  <p className="mt-1 text-sm text-zinc-800 dark:text-zinc-300">{authUser?.email || "-"}</p>
                 )}
               </div>
 
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Phone Number</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Phone Number</p>
                 {isProfileEditing ? (
                   <input
                     type="text"
                     value={profileForm.phone}
                     onChange={(event) => setProfileForm((prev) => ({ ...prev, phone: event.target.value }))}
-                    className="mt-1 w-full rounded border border-zinc-300 px-3 py-2 text-sm text-zinc-800 outline-none focus:border-zinc-500"
+                    className="mt-1 w-full rounded border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm text-zinc-800 dark:text-zinc-300 outline-none focus:border-zinc-500"
                   />
                 ) : (
-                  <p className="mt-1 text-sm text-zinc-800">{authUser?.phone || "-"}</p>
+                  <p className="mt-1 text-sm text-zinc-800 dark:text-zinc-300">{authUser?.phone || "-"}</p>
                 )}
               </div>
 
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Address</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Address</p>
                 {isProfileEditing ? (
                   <input
                     type="text"
                     value={profileForm.address}
                     onChange={(event) => setProfileForm((prev) => ({ ...prev, address: event.target.value }))}
-                    className="mt-1 w-full rounded border border-zinc-300 px-3 py-2 text-sm text-zinc-800 outline-none focus:border-zinc-500"
+                    className="mt-1 w-full rounded border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm text-zinc-800 dark:text-zinc-300 outline-none focus:border-zinc-500"
                   />
                 ) : (
-                  <p className="mt-1 text-sm text-zinc-800">{authUser?.address || "-"}</p>
+                  <p className="mt-1 text-sm text-zinc-800 dark:text-zinc-300">{authUser?.address || "-"}</p>
                 )}
               </div>
 
               {isProfileEditing && (
                 <>
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Current Password</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Current Password</p>
                     <div className="relative mt-1">
                       <input
                         type={showCurrentPassword ? "text" : "password"}
                         value={profileForm.currentPassword}
                         onChange={(event) => setProfileForm((prev) => ({ ...prev, currentPassword: event.target.value }))}
-                        className="w-full rounded border border-zinc-300 px-3 py-2 pr-10 text-sm text-zinc-800 outline-none focus:border-zinc-500"
+                        className="w-full rounded border border-zinc-300 dark:border-zinc-600 px-3 py-2 pr-10 text-sm text-zinc-800 dark:text-zinc-300 outline-none focus:border-zinc-500"
                       />
                       <button
                         type="button"
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 transition hover:text-zinc-700"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 dark:text-zinc-400 transition hover:text-zinc-700 dark:text-zinc-300"
                         onClick={() => setShowCurrentPassword((prev) => !prev)}
                         aria-label={showCurrentPassword ? "Hide password" : "Show password"}
                       >
@@ -893,17 +913,17 @@ export default function Navbar() {
                   </div>
 
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">New Password</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">New Password</p>
                     <div className="relative mt-1">
                       <input
                         type={showNewPassword ? "text" : "password"}
                         value={profileForm.newPassword}
                         onChange={(event) => setProfileForm((prev) => ({ ...prev, newPassword: event.target.value }))}
-                        className="w-full rounded border border-zinc-300 px-3 py-2 pr-10 text-sm text-zinc-800 outline-none focus:border-zinc-500"
+                        className="w-full rounded border border-zinc-300 dark:border-zinc-600 px-3 py-2 pr-10 text-sm text-zinc-800 dark:text-zinc-300 outline-none focus:border-zinc-500"
                       />
                       <button
                         type="button"
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 transition hover:text-zinc-700"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 dark:text-zinc-400 transition hover:text-zinc-700 dark:text-zinc-300"
                         onClick={() => setShowNewPassword((prev) => !prev)}
                         aria-label={showNewPassword ? "Hide password" : "Show password"}
                       >
@@ -917,17 +937,17 @@ export default function Navbar() {
                   </div>
 
                   <div className="sm:col-span-2">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Confirm New Password</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Confirm New Password</p>
                     <div className="relative mt-1">
                       <input
                         type={showConfirmNewPassword ? "text" : "password"}
                         value={profileForm.confirmNewPassword}
                         onChange={(event) => setProfileForm((prev) => ({ ...prev, confirmNewPassword: event.target.value }))}
-                        className="w-full rounded border border-zinc-300 px-3 py-2 pr-10 text-sm text-zinc-800 outline-none focus:border-zinc-500"
+                        className="w-full rounded border border-zinc-300 dark:border-zinc-600 px-3 py-2 pr-10 text-sm text-zinc-800 dark:text-zinc-300 outline-none focus:border-zinc-500"
                       />
                       <button
                         type="button"
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 transition hover:text-zinc-700"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 dark:text-zinc-400 transition hover:text-zinc-700 dark:text-zinc-300"
                         onClick={() => setShowConfirmNewPassword((prev) => !prev)}
                         aria-label={showConfirmNewPassword ? "Hide password" : "Show password"}
                       >
@@ -950,25 +970,25 @@ export default function Navbar() {
             )}
 
             <div className="mt-7">
-              <h3 className="text-lg font-semibold text-zinc-800">Placed Orders</h3>
+              <h3 className="text-lg font-semibold text-zinc-800 dark:text-zinc-300">Placed Orders</h3>
               {orderHistory.length === 0 ? (
-                <p className="mt-2 text-sm text-zinc-600">No orders found yet.</p>
+                <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">No orders found yet.</p>
               ) : (
-                <div className="mt-3 max-h-52 space-y-2 overflow-y-auto rounded border border-zinc-200 p-3">
+                <div className="mt-3 max-h-52 space-y-2 overflow-y-auto rounded border border-zinc-200 dark:border-zinc-700 p-3">
                   {orderHistory.map((order) => (
-                    <div key={order._id || order.orderId} className="rounded border border-zinc-200 px-3 py-2">
+                    <div key={order._id || order.orderId} className="rounded border border-zinc-200 dark:border-zinc-700 px-3 py-2">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="text-sm font-semibold text-zinc-800">{order.foodName || "Food order"}</p>
-                          <p className="text-xs text-zinc-600">Order ID: {order.orderId}</p>
+                          <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-300">{order.foodName || "Food order"}</p>
+                          <p className="text-xs text-zinc-600 dark:text-zinc-400">Order ID: {order.orderId}</p>
                         </div>
                         <span
                           className={`rounded px-2 py-0.5 text-[11px] font-semibold uppercase ${
                             order.status === "delivered"
-                              ? "bg-emerald-100 text-emerald-700"
+                              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
                               : order.status === "progress"
-                                ? "bg-amber-100 text-amber-700"
-                                : "bg-zinc-100 text-zinc-700"
+                                ? "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+                                : "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:text-zinc-300"
                           }`}
                         >
                           {order.status === "delivered" ? "Delivered" : order.status === "progress" ? "Confirmed" : "Pending"}
@@ -984,7 +1004,7 @@ export default function Navbar() {
               {isProfileEditing ? (
                 <button
                   type="button"
-                  className="rounded-sm bg-[#ee6e73] px-5 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-[#e35f66]"
+                  className="brand-btn rounded-sm px-5 py-2 text-xs font-semibold uppercase tracking-wide transition"
                   onClick={handleProfileSave}
                 >
                   Save
@@ -992,7 +1012,7 @@ export default function Navbar() {
               ) : (
                 <button
                   type="button"
-                  className="rounded-sm bg-[#ee6e73] px-5 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-[#e35f66]"
+                  className="brand-btn rounded-sm px-5 py-2 text-xs font-semibold uppercase tracking-wide transition"
                   onClick={() => setIsProfileEditing(true)}
                 >
                   Edit
@@ -1000,7 +1020,7 @@ export default function Navbar() {
               )}
               <button
                 type="button"
-                className="rounded-sm px-4 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900"
+                className="rounded-sm px-4 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-600 dark:text-zinc-400 transition hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white"
                 onClick={closeProfileModal}
               >
                 Close
@@ -1012,16 +1032,16 @@ export default function Navbar() {
 
       {isContactOpen && (
         <div className="fixed inset-0 z-50 bg-black/45 px-4 py-12">
-          <div className="mx-auto w-full max-w-3xl bg-white p-5 shadow-xl sm:p-7">
-            <h2 className="text-4xl font-light text-zinc-800">Contact Info</h2>
-            <p className="mt-4 text-sm text-zinc-700">
+          <div className="mx-auto w-full max-w-3xl bg-white dark:bg-zinc-900 p-5 shadow-xl sm:p-7">
+            <h2 className="text-4xl font-light text-zinc-800 dark:text-zinc-300">Contact Info</h2>
+            <p className="mt-4 text-sm text-zinc-700 dark:text-zinc-300">
               You can contact us directly by calling to this number +8801605357646. Check the bottom Footer section of
               the website for more info.
             </p>
             <div className="mt-8 flex justify-end">
               <button
                 type="button"
-                className="rounded-md px-3 py-1.5 text-sm font-medium uppercase text-zinc-700 transition-colors duration-200 hover:bg-zinc-100 hover:text-zinc-900 active:bg-zinc-200"
+                className="rounded-md px-3 py-1.5 text-sm font-medium uppercase text-zinc-700 dark:text-zinc-300 transition-colors duration-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white active:bg-zinc-200 dark:active:bg-zinc-700"
                 onClick={() => setIsContactOpen(false)}
               >
                 Close

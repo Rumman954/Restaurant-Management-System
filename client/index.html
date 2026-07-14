@@ -10,6 +10,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Bree+Serif&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
     <title>Resturant</title>
+    <script>
+      (function () {
+        try {
+          var theme = localStorage.getItem("theme") || localStorage.getItem("adminTheme");
+          if (theme === "dark") document.documentElement.classList.add("dark");
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

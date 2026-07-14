@@ -12,7 +12,7 @@ function App() {
   const isAdminRoute = location.pathname.startsWith("/admin");
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-[#fafafa] text-zinc-800 transition-colors duration-300 dark:bg-[#0b0e14] dark:text-zinc-300">
       {!isAdminRoute && <Navbar />}
       <main className="flex-1">
         <Routes>

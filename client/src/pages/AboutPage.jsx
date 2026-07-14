@@ -2,8 +2,8 @@ export default function AboutPage() {
   return (
     <main className="mx-auto max-w-6xl px-4 py-10">
       <section className="text-center">
-        <h1 className="mb-4 text-5xl font-medium text-zinc-800">ABOUT US</h1>
-        <p className="mx-auto max-w-5xl text-sm leading-7 text-zinc-700">
+        <h1 className="mb-4 text-5xl font-medium text-zinc-800 dark:text-zinc-300">ABOUT US</h1>
+        <p className="mx-auto max-w-5xl text-sm leading-7 text-zinc-700 dark:text-zinc-300">
           Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quas illo maiores commodi quia rerum, recusandae
           corporis consectetur. Nisi tempore distinctio dolorem facere, neque eaque ea! At ratione autem nemo, veniam
           molestias, atque quod explicabo quo non vel consequuntur voluptate obcaecati placeat quasi molestiae eaque
@@ -22,9 +22,9 @@ export default function AboutPage() {
       </section>
 
       <section className="pt-16">
-        <h2 className="old-h2 mb-10 px-5 text-center text-zinc-800">Resturant Powered By Students</h2>
+        <h2 className="old-h2 mb-10 px-5 text-center text-zinc-800 dark:text-zinc-300">Resturant Powered By Students</h2>
         <div className="grid items-end gap-8 md:grid-cols-[1.7fr_1fr]">
-          <p className="mx-auto max-w-[700px] text-center text-[14px] leading-7 text-zinc-600 md:text-left">
+          <p className="mx-auto max-w-[700px] text-center text-[14px] leading-7 text-zinc-600 dark:text-zinc-400 md:text-left">
             Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quibusdam ea molestiae, ipsa, tenetur itaque
             dicta libero delectus incidunt fuga repudiandae est rerum expedita quia debitis quam illo vero laboriosam
             numquam eius molestias! Quas reprehenderit voluptatem nemo, fugiat modi atque illo earum ea tenetur sed
@@ -37,7 +37,7 @@ export default function AboutPage() {
           <img
             src="/images/cooking-6668437_1280.png"
             alt="Cooking illustration"
-            className="mx-auto h-[300px] w-[329px] object-contain md:mr-8"
+            className="food-illustration mx-auto h-[300px] w-[329px] object-contain md:mr-8"
           />
         </div>
       </section>

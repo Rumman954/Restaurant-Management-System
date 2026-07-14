@@ -88,12 +88,12 @@ export default function FoodsPage() {
             {orderNotice}
           </p>
         )}
-        <h2 className="mb-8 text-center text-4xl font-medium text-zinc-800 sm:text-5xl">Foods Area!</h2>
+        <h2 className="mb-8 text-center text-4xl font-medium text-zinc-800 dark:text-zinc-300 sm:text-5xl">Foods Area!</h2>
         <div className="mb-7 flex flex-wrap items-center justify-center gap-2">
           <button
             type="button"
             className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
-              selectedCategory === "all" ? "bg-[#ee6e73] text-white" : "bg-white text-zinc-700 hover:bg-zinc-100"
+              selectedCategory === "all" ? "brand-chip" : "bg-white text-zinc-700 hover:bg-zinc-100 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
             }`}
             onClick={() => setSearchParams({})}
           >
@@ -105,8 +105,8 @@ export default function FoodsPage() {
               type="button"
               className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
                 selectedCategory === category._id
-                  ? "bg-[#ee6e73] text-white"
-                  : "bg-white text-zinc-700 hover:bg-zinc-100"
+                  ? "brand-chip"
+                  : "bg-white text-zinc-700 hover:bg-zinc-100 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
               }`}
               onClick={() => setSearchParams({ category: category._id })}
             >
@@ -123,29 +123,31 @@ export default function FoodsPage() {
             const isExpanded = expandedFood === id;
 
             return (
-              <div key={id} className="h-[320px] [perspective:1000px]">
+              <div key={id} className="h-[340px] [perspective:1000px]">
                 <div
-                  className="relative h-full w-full rounded border border-zinc-200 transition-transform duration-700 [transform-style:preserve-3d]"
+                  className="relative h-full w-full rounded border border-zinc-200 dark:border-zinc-700 transition-transform duration-700 [transform-style:preserve-3d]"
                   style={{ transform: isExpanded ? "rotateY(180deg)" : "rotateY(0deg)" }}
                 >
-                  <article className="absolute inset-0 overflow-hidden rounded bg-white shadow-sm [backface-visibility:hidden]">
-                    <img src={image} alt={food.fname} className="h-32 w-full object-cover sm:h-36" />
+                  <article className="absolute inset-0 overflow-hidden rounded bg-white shadow-sm [backface-visibility:hidden] dark:bg-zinc-900">
+                    <div className="food-media-frame h-36 sm:h-40">
+                      <img src={image} alt={food.fname} className="food-media" />
+                    </div>
                     <div className="p-4">
                       <div className="flex items-start justify-between gap-3">
                         <h3 className="text-2xl font-normal sm:text-3xl">{food.fname}</h3>
                         <button
                           type="button"
-                          className="text-xl leading-none text-zinc-700 transition hover:text-zinc-900"
+                          className="text-xl leading-none text-zinc-700 dark:text-zinc-300 transition hover:text-zinc-900 dark:hover:text-white"
                           onClick={() => setExpandedFood(id)}
                           aria-label={`Show ${food.fname} details`}
                         >
                           ⋮
                         </button>
                       </div>
-                      <p className="mt-2 text-sm leading-6 text-zinc-600">{summary}</p>
+                      <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">{summary}</p>
                       <button
                         type="button"
-                        className="mt-4 w-full rounded-sm bg-[#ee6e73] px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-white transition hover:bg-[#e35f66]"
+                        className="brand-btn mt-4 w-full rounded-sm px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wide transition"
                         onClick={async () => {
                           const orderName = food.fname || "Food order";
                           const authToken = sessionStorage.getItem("authToken");
@@ -174,19 +176,19 @@ export default function FoodsPage() {
                     </div>
                   </article>
 
-                  <article className="absolute inset-0 rounded bg-white p-4 shadow-sm [backface-visibility:hidden] [transform:rotateY(180deg)]">
+                  <article className="absolute inset-0 rounded bg-white dark:bg-zinc-900 p-4 shadow-sm [backface-visibility:hidden] [transform:rotateY(180deg)]">
                     <div className="flex items-start justify-between gap-3">
                       <h3 className="text-2xl font-normal">{food.fname}</h3>
                       <button
                         type="button"
-                        className="text-lg text-zinc-600 transition hover:text-zinc-900"
+                        className="text-lg text-zinc-600 dark:text-zinc-400 transition hover:text-zinc-900 dark:hover:text-white"
                         onClick={() => setExpandedFood(null)}
                         aria-label={`Close ${food.fname} details`}
                       >
                         ×
                       </button>
                     </div>
-                    <p className="mt-3 text-sm leading-6 text-zinc-600">{details}</p>
+                    <p className="mt-3 text-sm leading-6 text-zinc-600 dark:text-zinc-400">{details}</p>
                   </article>
                 </div>
               </div>
@@ -194,18 +196,18 @@ export default function FoodsPage() {
           })}
         </div>
         {visibleFoods.length === 0 && (
-          <p className="mt-8 text-center text-sm text-zinc-600">No foods found for this category.</p>
+          <p className="mt-8 text-center text-sm text-zinc-600 dark:text-zinc-400">No foods found for this category.</p>
         )}
       </section>
 
       {showLoginWarning && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4">
-          <div className="w-full max-w-md rounded bg-white p-6 shadow-xl">
-            <p className="text-center text-base text-zinc-800">For place order please login your account</p>
+          <div className="w-full max-w-md rounded bg-white dark:bg-zinc-900 p-6 shadow-xl">
+            <p className="text-center text-base text-zinc-800 dark:text-zinc-300">For place order please login your account</p>
             <div className="mt-6 flex justify-center">
               <button
                 type="button"
-                className="rounded-sm bg-[#ee6e73] px-5 py-2 text-sm font-semibold uppercase tracking-wide text-white transition hover:bg-[#e35f66]"
+                className="brand-btn rounded-sm px-5 py-2 text-sm font-semibold uppercase tracking-wide transition"
                 onClick={handleLoginWarningOk}
               >
                 Ok

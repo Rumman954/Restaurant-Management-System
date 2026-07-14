@@ -1,10 +1,146 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 body {
   margin: 0;
   background: #fafafa;
   color: #1f2937;
   font-family: Arial, Helvetica, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+html.dark body {
+  background: #0b0e14;
+  color: #c8c9ce;
+}
+
+/* Food / gallery images: steadier crop + softer night look */
+.food-media {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+html.dark .food-media {
+  filter: brightness(0.86) saturate(0.94);
+}
+
+.food-media-frame {
+  position: relative;
+  overflow: hidden;
+  background: #e4e4e7;
+}
+
+html.dark .food-media-frame {
+  background: #18181b;
+}
+
+.food-media-frame::after {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 55%, rgba(0, 0, 0, 0.18));
+  opacity: 0.35;
+}
+
+html.dark .food-media-frame::after {
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.45));
+  opacity: 1;
+}
+
+html.dark .food-illustration {
+  filter: brightness(0.9) contrast(0.95);
+  opacity: 0.92;
+}
+
+/* Brand accents — bright coral by day, dark coral at night */
+.brand-bar {
+  background-color: #ee6e73;
+  border-bottom-color: #fda4af;
+}
+
+html.dark .brand-bar {
+  background-color: #b84a52;
+  border-bottom-color: #c75b63;
+}
+
+.brand-bar-link:hover,
+.brand-bar-link:active {
+  background-color: #e35f66;
+}
+
+html.dark .brand-bar-link:hover {
+  background-color: #a6434b;
+}
+
+html.dark .brand-bar-link:active {
+  background-color: #943a41;
+}
+
+.brand-btn {
+  background-color: #ee6e73;
+  color: #fff;
+}
+
+.brand-btn:hover {
+  background-color: #e35f66;
+}
+
+.brand-btn:active {
+  background-color: #d8565d;
+}
+
+html.dark .brand-btn {
+  background-color: #b84a52;
+}
+
+html.dark .brand-btn:hover {
+  background-color: #c75b63;
+}
+
+html.dark .brand-btn:active {
+  background-color: #a6434b;
+}
+
+.brand-chip {
+  background-color: #ee6e73;
+  color: #fff;
+}
+
+html.dark .brand-chip {
+  background-color: #b84a52;
+}
+
+.brand-footer {
+  background-color: #ee6e73;
+  color: #fff;
+}
+
+html.dark .brand-footer {
+  background-color: #b84a52;
+  border-top: none;
+}
+
+.brand-review {
+  background-color: #ee6e73;
+  color: #fff;
+}
+
+html.dark .brand-review {
+  background-color: #b84a52;
+  border: none;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+html.dark .brand-bar,
+html.dark .brand-footer,
+html.dark .brand-btn,
+html.dark .brand-chip,
+html.dark .brand-review {
+  color: rgba(255, 255, 255, 0.88);
 }
 
 .brand-logo {
