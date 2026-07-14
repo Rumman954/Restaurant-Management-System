@@ -14,11 +14,17 @@ router.get("/admin/overview", requireAuth, requireAdmin, async (_req, res) => {
       Order.find().populate("userId", "name email").sort({ createdAt: -1 }),
     ]);
 
+    const totalRevenue = orders.reduce((sum, order) => {
+      if (order.status !== "delivered") return sum;
+      return sum + (Number(order.price) > 0 ? Number(order.price) : 250);
+    }, 0);
+
     res.json({
       stats: {
         totalUsers: users.length,
         totalFoods: foods.length,
         totalOrders: orders.length,
+        totalRevenue,
       },
       users,
       foods,

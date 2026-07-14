@@ -15,6 +15,7 @@ router.post("/orders", requireAuth, async (req, res) => {
       userId: req.user._id,
       foodName: foodName.trim(),
       orderId: createOrderId(),
+      price: Number(req.body.price) > 0 ? Number(req.body.price) : 250,
     });
 
     res.json({ code: "1", msg: "Order placed.", order });
