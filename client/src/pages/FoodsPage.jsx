@@ -1,34 +1,121 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { api } from "../lib/api";
-import { MENU_CATEGORIES, MENU_FOODS } from "../data/menuCatalog";
+import { MENU_FOODS, mergeMenuCategories } from "../data/menuCatalog";
 
 export default function FoodsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [expandedFood, setExpandedFood] = useState(null);
   const [orderNotice, setOrderNotice] = useState("");
   const [showLoginWarning, setShowLoginWarning] = useState(false);
+  const [apiCategories, setApiCategories] = useState([]);
+  const [apiFoods, setApiFoods] = useState([]);
 
-  const menuFoods = useMemo(() => {
+  useEffect(() => {
+    let active = true;
+    Promise.all([api.get("/categories"), api.get("/foods")])
+      .then(([categoriesRes, foodsRes]) => {
+        if (!active) return;
+        setApiCategories(Array.isArray(categoriesRes.data) ? categoriesRes.data : []);
+        setApiFoods(Array.isArray(foodsRes.data) ? foodsRes.data : []);
+      })
+      .catch(() => {
+        if (!active) return;
+        setApiCategories([]);
+        setApiFoods([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const menuCategories = useMemo(() => mergeMenuCategories(apiCategories), [apiCategories]);
+
+  const categoryKeysByName = useMemo(() => {
+    const map = new Map();
+    for (const category of menuCategories) {
+      const nameKey = String(category.name || "")
+        .trim()
+        .toLowerCase();
+      if (!nameKey) continue;
+      map.set(nameKey, new Set([String(category.filterId), String(category._id)]));
+    }
+    return map;
+  }, [menuCategories]);
+
+  const allFoods = useMemo(() => {
+    let hidden = [];
+    let imageOverrides = {};
     try {
-      const hidden = JSON.parse(localStorage.getItem("adminHiddenMenuFoods") || "[]");
-      const imageOverrides = JSON.parse(localStorage.getItem("adminFoodImageOverrides") || "{}");
-      return MENU_FOODS.filter((food) => !hidden.includes(food._id)).map((food) => ({
+      hidden = JSON.parse(localStorage.getItem("adminHiddenMenuFoods") || "[]");
+      imageOverrides = JSON.parse(localStorage.getItem("adminFoodImageOverrides") || "{}");
+    } catch {
+      hidden = [];
+      imageOverrides = {};
+    }
+
+    const fromMenu = MENU_FOODS.filter((food) => !hidden.includes(food._id)).map((food) => {
+      const keys = categoryKeysByName.get(
+        String(
+          menuCategories.find((c) => c.filterId === food.categoryId)?.name || food.categoryId
+        )
+          .trim()
+          .toLowerCase()
+      );
+      return {
         ...food,
         image: imageOverrides[food._id] || food.image,
-      }));
-    } catch {
-      return MENU_FOODS;
-    }
-  }, []);
-  const menuCategories = MENU_CATEGORIES;
+        categoryKeys: keys ? Array.from(keys) : [food.categoryId],
+        source: "menu",
+      };
+    });
+
+    const menuNames = new Set(fromMenu.map((food) => String(food.fname || "").trim().toLowerCase()));
+
+    const fromApi = apiFoods
+      .filter((food) => !menuNames.has(String(food.fname || "").trim().toLowerCase()))
+      .map((food) => {
+        const categoryName = food.categoryId?.name || "";
+        const categoryMongoId = String(food.categoryId?._id || food.categoryId || "");
+        const nameKey = categoryName.trim().toLowerCase();
+        const keys = new Set(categoryKeysByName.get(nameKey) || []);
+        if (categoryMongoId) keys.add(categoryMongoId);
+        const matched = menuCategories.find((c) => String(c._id) === categoryMongoId || c.name?.toLowerCase() === nameKey);
+        if (matched?.filterId) keys.add(String(matched.filterId));
+
+        return {
+          _id: food._id,
+          fname: food.fname,
+          description: food.description || "This is a popular Food of Bangladesh. Order Now to Grab a bite of it!",
+          details: food.description || "Freshly prepared and tasty food item from this category.",
+          image: imageOverrides[food._id] || food.image || "/images/Snacks.jpg",
+          categoryId: matched?.filterId || categoryMongoId,
+          categoryKeys: Array.from(keys),
+          source: "api",
+        };
+      });
+
+    return [...fromMenu, ...fromApi];
+  }, [apiFoods, categoryKeysByName, menuCategories]);
 
   const selectedCategory = searchParams.get("category") || "all";
 
   const visibleFoods =
     selectedCategory === "all"
-      ? menuFoods
-      : menuFoods.filter((food) => food.categoryId === selectedCategory);
+      ? allFoods
+      : allFoods.filter((food) => {
+          if (food.categoryId === selectedCategory) return true;
+          if (food.categoryKeys?.includes(selectedCategory)) return true;
+          const selected = menuCategories.find(
+            (c) => c.filterId === selectedCategory || String(c._id) === selectedCategory
+          );
+          if (!selected) return false;
+          return (
+            food.categoryId === selected.filterId ||
+            food.categoryKeys?.includes(String(selected._id)) ||
+            food.categoryKeys?.includes(String(selected.filterId))
+          );
+        });
 
   const handleLoginWarningOk = () => {
     setShowLoginWarning(false);
@@ -54,20 +141,24 @@ export default function FoodsPage() {
           >
             All Foods
           </button>
-          {menuCategories.map((category) => (
-            <button
-              key={category._id}
-              type="button"
-              className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
-                selectedCategory === category._id
-                  ? "brand-chip"
-                  : "bg-white text-zinc-700 hover:bg-zinc-100 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
-              }`}
-              onClick={() => setSearchParams({ category: category._id })}
-            >
-              {category.name}
-            </button>
-          ))}
+          {menuCategories.map((category) => {
+            const isActive =
+              selectedCategory === category.filterId || selectedCategory === String(category._id);
+            return (
+              <button
+                key={String(category._id)}
+                type="button"
+                className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
+                  isActive
+                    ? "brand-chip"
+                    : "bg-white text-zinc-700 hover:bg-zinc-100 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                }`}
+                onClick={() => setSearchParams({ category: category.filterId })}
+              >
+                {category.name}
+              </button>
+            );
+          })}
         </div>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {visibleFoods.map((food) => {

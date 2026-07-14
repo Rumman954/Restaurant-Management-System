@@ -6,6 +6,59 @@ export const MENU_CATEGORIES = [
   { _id: "thai", name: "Thai" },
 ];
 
+const CATEGORY_IMAGE_FALLBACKS = {
+  italian: "/images/Italian.jpg",
+  chinese: "/images/Chinese.jpg",
+  snacks: "/images/Snacks.jpg",
+  bangladeshi: "/images/Bangldeshi.jpg",
+  thai: "/images/Thai.jpg",
+};
+
+export function categoryImageFor(name, image = "") {
+  if (image) return image;
+  const key = String(name || "")
+    .trim()
+    .toLowerCase();
+  return CATEGORY_IMAGE_FALLBACKS[key] || "/images/Snacks.jpg";
+}
+
+/** Merge DB categories with static menu categories so new admin categories appear publicly. */
+export function mergeMenuCategories(apiCategories = []) {
+  const slugByName = Object.fromEntries(MENU_CATEGORIES.map((c) => [c.name.toLowerCase(), c._id]));
+  const byName = new Map();
+
+  for (const cat of apiCategories) {
+    const nameKey = String(cat.name || "")
+      .trim()
+      .toLowerCase();
+    if (!nameKey) continue;
+    const slug = slugByName[nameKey];
+    byName.set(nameKey, {
+      _id: cat._id,
+      name: cat.name,
+      shortDesc: cat.shortDesc || "",
+      longDesc: cat.longDesc || "Explore the Foods of this category!",
+      image: categoryImageFor(cat.name, cat.image),
+      filterId: slug || String(cat._id),
+    });
+  }
+
+  for (const cat of MENU_CATEGORIES) {
+    const nameKey = cat.name.toLowerCase();
+    if (byName.has(nameKey)) continue;
+    byName.set(nameKey, {
+      _id: cat._id,
+      name: cat.name,
+      shortDesc: "",
+      longDesc: "This is a popular category of Bangladesh. Explore the Foods of this category!",
+      image: categoryImageFor(cat.name),
+      filterId: cat._id,
+    });
+  }
+
+  return Array.from(byName.values());
+}
+
 const DEFAULT_DESCRIPTION = "This is a popular Food of Bangladesh. Order Now to Grab a bite of it!";
 const DEFAULT_DETAILS = "Freshly prepared and tasty food item from this category.";
 

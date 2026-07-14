@@ -34,6 +34,7 @@ export default function Navbar() {
     email: "",
     phone: "",
     address: "",
+    image: "",
     password: "",
     confirmPassword: "",
   });
@@ -55,6 +56,7 @@ export default function Navbar() {
     email: "",
     phone: "",
     address: "",
+    image: "",
     currentPassword: "",
     newPassword: "",
     confirmNewPassword: "",
@@ -94,9 +96,24 @@ export default function Navbar() {
     setLoginStatus({ type: "", message: "" });
   };
 
+  const readOptionalImage = (file, onDone, onError) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      onError?.("Please choose an image file.");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      onError?.("Image must be under 2MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => onDone(String(reader.result || ""));
+    reader.readAsDataURL(file);
+  };
+
   const openRegisterModal = () => {
     setIsRegisterOpen(true);
-    setRegisterForm({ fullName: "", email: "", phone: "", address: "", password: "", confirmPassword: "" });
+    setRegisterForm({ fullName: "", email: "", phone: "", address: "", image: "", password: "", confirmPassword: "" });
     setRegisterErrors({ fullName: "", email: "", password: "", confirmPassword: "" });
     setRegisterStatus({ type: "", message: "" });
     setShowRegisterPassword(false);
@@ -202,6 +219,7 @@ export default function Navbar() {
         email: trimmedEmail,
         phone: registerForm.phone.trim(),
         address: registerForm.address.trim(),
+        image: registerForm.image || "",
         password: registerForm.password,
       });
 
@@ -226,11 +244,14 @@ export default function Navbar() {
   const navItemsWithAdmin = authUser?.role === "admin" ? [...navItems, { label: "Admin", to: "/admin" }] : navItems;
 
   const accountItems = authUser
-    ? [{ label: "Logout", to: "#" }]
+    ? []
     : [
         { label: "Login", to: "/about" },
         { label: "Register", to: "/about" },
       ];
+
+  const surname = getSurname(authUser?.name);
+  const displayName = authUser?.name?.trim() || surname || "User";
 
   const handleLogout = () => {
     sessionStorage.removeItem("authToken");
@@ -251,6 +272,7 @@ export default function Navbar() {
       email: authUser.email || "",
       phone: authUser.phone || "",
       address: authUser.address || "",
+      image: authUser.image || "",
       currentPassword: "",
       newPassword: "",
       confirmNewPassword: "",
@@ -314,6 +336,7 @@ export default function Navbar() {
           email: profileForm.email.trim(),
           phone: profileForm.phone.trim(),
           address: profileForm.address.trim(),
+          image: profileForm.image || "",
           currentPassword: profileForm.currentPassword,
           newPassword: profileForm.newPassword,
         },
@@ -332,8 +355,6 @@ export default function Navbar() {
       setProfileStatus({ type: "error", message });
     }
   };
-
-  const surname = getSurname(authUser?.name);
 
   return (
     <>
@@ -383,13 +404,22 @@ export default function Navbar() {
           {authUser && (
             <button
               type="button"
-              className="text-sm font-semibold text-white transition hover:text-rose-100 dark:text-zinc-200 dark:hover:text-rose-300"
+              className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 py-1 pl-1 pr-3 text-sm font-semibold text-white transition hover:bg-white/20 dark:text-zinc-100"
               onClick={openProfileModal}
             >
-              Hi, {surname || authUser.name}
+              <span className="h-8 w-8 overflow-hidden rounded-full border border-white/40 bg-white/20">
+                {authUser.image ? (
+                  <img src={authUser.image} alt={displayName} className="h-full w-full object-cover" />
+                ) : (
+                  <span className="flex h-full w-full items-center justify-center text-xs font-bold text-white">
+                    {String(displayName).slice(0, 1).toUpperCase()}
+                  </span>
+                )}
+              </span>
+              <span>Hi, {displayName}</span>
             </button>
           )}
-          {accountItems.map((item) => (
+          {accountItems.map((item) =>
             item.label === "Login" ? (
               <button
                 key={item.label}
@@ -400,7 +430,6 @@ export default function Navbar() {
                 {item.label}
               </button>
             ) : (
-              item.label === "Register" ? (
               <button
                 key={item.label}
                 type="button"
@@ -409,26 +438,8 @@ export default function Navbar() {
               >
                 {item.label}
               </button>
-              ) : item.label === "Logout" ? (
-                <button
-                  key={item.label}
-                  type="button"
-                  className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-rose-600 transition duration-200 hover:-translate-y-0.5 hover:bg-rose-50 hover:shadow-sm dark:bg-[#421F37] dark:text-white dark:hover:bg-[#5a2a4a]"
-                  onClick={handleLogout}
-                >
-                  {item.label}
-                </button>
-              ) : (
-                <Link
-                  key={item.label}
-                  to={item.to}
-                  className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-rose-600 transition duration-200 hover:-translate-y-0.5 hover:bg-rose-50 hover:shadow-sm dark:bg-[#421F37] dark:text-white dark:hover:bg-[#5a2a4a]"
-                >
-                  {item.label}
-                </Link>
-              )
             )
-          ))}
+          )}
         </div>
 
         <button
@@ -467,10 +478,19 @@ export default function Navbar() {
               {authUser && (
                 <button
                   type="button"
-                  className="rounded-md px-3 py-2 text-left text-base font-semibold text-zinc-700 dark:text-zinc-300 transition hover:bg-rose-50"
+                  className="mb-1 flex items-center gap-3 rounded-md px-3 py-2 text-left text-base font-semibold text-zinc-700 transition hover:bg-rose-50 dark:text-zinc-300 dark:hover:bg-rose-950/40"
                   onClick={openProfileModal}
                 >
-                  Hi, {surname || authUser.name}
+                  <span className="h-9 w-9 overflow-hidden rounded-full border border-zinc-200 bg-zinc-100 dark:border-zinc-600 dark:bg-zinc-800">
+                    {authUser.image ? (
+                      <img src={authUser.image} alt={displayName} className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="flex h-full w-full items-center justify-center text-sm font-bold text-zinc-700 dark:text-zinc-200">
+                        {String(displayName).slice(0, 1).toUpperCase()}
+                      </span>
+                    )}
+                  </span>
+                  <span>Hi, {displayName}</span>
                 </button>
               )}
               {[...navItemsWithAdmin, ...accountItems].map((item) =>
@@ -510,15 +530,6 @@ export default function Navbar() {
                   >
                     {item.label}
                   </button>
-                ) : item.label === "Logout" ? (
-                  <button
-                    key={item.label}
-                    type="button"
-                    className="rounded-md px-3 py-2 text-left text-base font-medium text-zinc-700 dark:text-zinc-300 transition-colors duration-200 hover:bg-rose-50 hover:text-zinc-800 dark:text-zinc-300 active:bg-rose-200 active:text-rose-900 focus-visible:bg-rose-50 focus-visible:text-zinc-800 dark:text-zinc-300 [-webkit-tap-highlight-color:transparent]"
-                    onClick={handleLogout}
-                  >
-                    {item.label}
-                  </button>
                 ) : (
                   <Link
                     key={item.label}
@@ -542,6 +553,49 @@ export default function Navbar() {
             <p className="mt-3 text-center text-lg font-normal text-[#bf3f45] sm:text-xl">Don't leave the fields blank!</p>
 
             <form className="mt-9" onSubmit={handleRegisterSubmit} noValidate>
+              <div className="mb-8 flex flex-col items-center gap-3">
+                <div className="h-24 w-24 overflow-hidden rounded-full border border-zinc-300 bg-zinc-100 dark:border-zinc-600 dark:bg-zinc-800">
+                  {registerForm.image ? (
+                    <img src={registerForm.image} alt="Profile preview" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-sm text-zinc-500 dark:text-zinc-400">
+                      Photo
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-3">
+                  <label className="inline-flex cursor-pointer items-center rounded-sm border border-zinc-300 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800">
+                    Upload Photo
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(event) => {
+                        readOptionalImage(
+                          event.target.files?.[0],
+                          (image) => {
+                            setRegisterForm((prev) => ({ ...prev, image }));
+                            setRegisterStatus({ type: "", message: "" });
+                          },
+                          (message) => setRegisterStatus({ type: "error", message })
+                        );
+                        event.target.value = "";
+                      }}
+                    />
+                  </label>
+                  {registerForm.image && (
+                    <button
+                      type="button"
+                      className="text-xs font-semibold text-rose-500"
+                      onClick={() => setRegisterForm((prev) => ({ ...prev, image: "" }))}
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">Optional — you can skip this</p>
+              </div>
+
               <div>
                 <input
                   type="text"
@@ -829,6 +883,57 @@ export default function Navbar() {
           <div className="mx-auto w-full max-w-3xl rounded bg-white dark:bg-zinc-900 p-6 shadow-xl sm:p-8">
             <h2 className="text-center text-3xl font-semibold text-zinc-800 dark:text-zinc-300">Customer Details</h2>
 
+            <div className="mt-5 flex flex-col items-center gap-3">
+              <div className="h-24 w-24 overflow-hidden rounded-full border border-zinc-300 bg-zinc-100 dark:border-zinc-600 dark:bg-zinc-800">
+                {(isProfileEditing ? profileForm.image : authUser?.image) ? (
+                  <img
+                    src={isProfileEditing ? profileForm.image : authUser?.image}
+                    alt={authUser?.name || "Profile"}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-2xl font-semibold text-zinc-700 dark:text-zinc-300">
+                    {String(authUser?.name || "U")
+                      .trim()
+                      .slice(0, 1)
+                      .toUpperCase()}
+                  </div>
+                )}
+              </div>
+              {isProfileEditing && (
+                <div className="flex items-center gap-3">
+                  <label className="inline-flex cursor-pointer items-center rounded-sm border border-zinc-300 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800">
+                    Upload Photo
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(event) => {
+                        readOptionalImage(
+                          event.target.files?.[0],
+                          (image) => {
+                            setProfileForm((prev) => ({ ...prev, image }));
+                            setProfileStatus({ type: "", message: "" });
+                          },
+                          (message) => setProfileStatus({ type: "error", message })
+                        );
+                        event.target.value = "";
+                      }}
+                    />
+                  </label>
+                  {profileForm.image && (
+                    <button
+                      type="button"
+                      className="text-xs font-semibold text-rose-500"
+                      onClick={() => setProfileForm((prev) => ({ ...prev, image: "" }))}
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Name</p>
@@ -1018,6 +1123,13 @@ export default function Navbar() {
                   Edit
                 </button>
               )}
+              <button
+                type="button"
+                className="rounded-sm px-4 py-2 text-xs font-semibold uppercase tracking-wide text-rose-600 transition hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950/40"
+                onClick={handleLogout}
+              >
+                Logout
+              </button>
               <button
                 type="button"
                 className="rounded-sm px-4 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-600 dark:text-zinc-400 transition hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white"

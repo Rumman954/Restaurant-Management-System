@@ -25,6 +25,7 @@ const requireAuth = async (req, res, next) => {
 
     const user = await User.findById(decoded.id).select("-password");
     if (!user) return res.status(401).json({ code: "0", msg: "Unauthorized." });
+    if (user.blocked) return res.status(403).json({ code: "0", msg: "Account is blocked." });
 
     req.user = user;
     next();
@@ -34,7 +35,8 @@ const requireAuth = async (req, res, next) => {
 };
 
 const requireAdmin = (req, res, next) => {
-  if (!req.user || !req.user.isEnvAdmin) {
+  const isAdmin = Boolean(req.user?.isEnvAdmin) || req.user?.role === "admin";
+  if (!req.user || !isAdmin) {
     return res.status(403).json({ code: "0", msg: "Admin access required." });
   }
   next();

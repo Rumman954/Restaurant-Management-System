@@ -9,9 +9,36 @@ const seed = async () => {
   await Food.deleteMany({});
 
   const categories = await Category.insertMany([
-    { name: "Italian", shortDesc: "This is a popular category", longDesc: "Italian cuisine encompasses a wide variety of regional cuisines." },
-    { name: "Chinese", shortDesc: "Chinese cuisine is an important part of culture", longDesc: "Different styles from Cantonese to Sichuan are popular globally." },
-    { name: "Snacks", shortDesc: "A snack is a small portion of food eaten between meals", longDesc: "Snacks are quick foods loved by everyone." },
+    {
+      name: "Italian",
+      shortDesc: "This is a popular category",
+      longDesc: "Italian cuisine encompasses a wide variety of regional cuisines.",
+      image: "/images/Italian.jpg",
+    },
+    {
+      name: "Chinese",
+      shortDesc: "Chinese cuisine is an important part of culture",
+      longDesc: "Different styles from Cantonese to Sichuan are popular globally.",
+      image: "/images/Chinese.jpg",
+    },
+    {
+      name: "Snacks",
+      shortDesc: "A snack is a small portion of food eaten between meals",
+      longDesc: "Snacks are quick foods loved by everyone.",
+      image: "/images/Snacks.jpg",
+    },
+    {
+      name: "Bangladeshi",
+      shortDesc: "Classic Bangladeshi flavors",
+      longDesc: "This is a popular category of Bangladesh. Explore the Foods of this category!",
+      image: "/images/Bangldeshi.jpg",
+    },
+    {
+      name: "Thai",
+      shortDesc: "Bold Thai flavors",
+      longDesc: "This is a popular category of Bangladesh. Explore the Foods of this category!",
+      image: "/images/Thai.jpg",
+    },
   ]);
 
   await Food.insertMany([

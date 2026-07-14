@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 import { useTheme } from "../context/ThemeContext";
-import { MENU_FOODS, categoryLabel } from "../data/menuCatalog";
+import { MENU_FOODS, categoryImageFor, categoryLabel } from "../data/menuCatalog";
 
 function MetricCard({ label, value, iconBg, icon }) {
   return (
@@ -52,39 +52,113 @@ function OverviewPie({ users, orders, revenue, items }) {
 
 const BAR_COLORS = ["#ee6e73", "#f59e0b", "#0ea5e9", "#22c55e"];
 
-function FoodActionMenu({ onEdit, onUpdate, onDelete }) {
+let exclusiveMenuClose = null;
+
+function closeExclusiveMenu() {
+  if (typeof exclusiveMenuClose === "function") {
+    exclusiveMenuClose();
+    exclusiveMenuClose = null;
+  }
+}
+
+function getMenuPlacement(triggerEl, menuHeight = 130) {
+  if (!triggerEl) return "below";
+  const rect = triggerEl.getBoundingClientRect();
+  const viewportH = window.innerHeight || 800;
+  const spaceAbove = rect.top;
+  const spaceBelow = viewportH - rect.bottom;
+  const centerRatio = (rect.top + rect.height / 2) / viewportH;
+
+  // Lower side of screen → open upward
+  if (centerRatio > 0.66 || (spaceBelow < menuHeight && spaceAbove > spaceBelow)) {
+    return "above";
+  }
+  // Upper side → open downward
+  if (centerRatio < 0.34 || spaceAbove < menuHeight) {
+    return "below";
+  }
+  // Middle → align to middle of the trigger
+  return "middle";
+}
+
+function menuPlacementClass(placement) {
+  if (placement === "above") return "bottom-full mb-1";
+  if (placement === "middle") return "top-1/2 -translate-y-1/2";
+  return "top-full mt-1";
+}
+
+function useExclusiveActionMenu(menuHeight = 130) {
   const [open, setOpen] = useState(false);
+  const [placement, setPlacement] = useState("below");
+  const triggerRef = useRef(null);
+  const openRef = useRef(false);
+
+  useEffect(() => {
+    openRef.current = open;
+  }, [open]);
+
+  const closeMenu = () => {
+    setOpen(false);
+    if (exclusiveMenuClose === closeMenu) exclusiveMenuClose = null;
+  };
+
+  const toggleMenu = (event) => {
+    event.stopPropagation();
+    if (openRef.current) {
+      closeMenu();
+      return;
+    }
+    closeExclusiveMenu();
+    setPlacement(getMenuPlacement(triggerRef.current, menuHeight));
+    setOpen(true);
+    exclusiveMenuClose = closeMenu;
+  };
 
   useEffect(() => {
     if (!open) return undefined;
-    const close = () => setOpen(false);
-    window.addEventListener("click", close);
-    return () => window.removeEventListener("click", close);
-  }, [open]);
+    setPlacement(getMenuPlacement(triggerRef.current, menuHeight));
+    const onOutsideClick = () => closeMenu();
+    const reposition = () => setPlacement(getMenuPlacement(triggerRef.current, menuHeight));
+    window.addEventListener("click", onOutsideClick);
+    window.addEventListener("resize", reposition);
+    window.addEventListener("scroll", reposition, true);
+    return () => {
+      window.removeEventListener("click", onOutsideClick);
+      window.removeEventListener("resize", reposition);
+      window.removeEventListener("scroll", reposition, true);
+    };
+  }, [open, menuHeight]);
+
+  useEffect(() => () => {
+    if (exclusiveMenuClose === closeMenu) exclusiveMenuClose = null;
+  }, []);
+
+  return { open, closeMenu, toggleMenu, placement, triggerRef };
+}
+
+function FoodActionMenu({ onEdit, onUpdate, onDelete }) {
+  const { open, closeMenu, toggleMenu, placement, triggerRef } = useExclusiveActionMenu(130);
 
   return (
-    <div className="relative inline-flex justify-end">
+    <div className="relative inline-flex justify-end" ref={triggerRef}>
       <button
         type="button"
         className="rounded-md px-2 py-1 text-lg leading-none text-[var(--a-muted)] transition hover:bg-[var(--a-nav-hover)] hover:text-[var(--a-heading)]"
         aria-label="Food actions"
-        onClick={(event) => {
-          event.stopPropagation();
-          setOpen((prev) => !prev);
-        }}
+        onClick={toggleMenu}
       >
         ⋮
       </button>
       {open && (
         <div
-          className="absolute right-0 z-20 mt-8 min-w-[128px] overflow-hidden rounded-lg border border-[color:var(--a-border)] bg-[var(--a-card)] py-1 shadow-xl"
+          className={`absolute right-0 z-30 min-w-[128px] overflow-hidden rounded-lg border border-[color:var(--a-border)] bg-[var(--a-card)] py-1 shadow-xl ${menuPlacementClass(placement)}`}
           onClick={(event) => event.stopPropagation()}
         >
           <button
             type="button"
             className="block w-full px-3 py-2 text-left text-sm text-[var(--a-text)] transition hover:bg-[var(--a-nav-hover)]"
             onClick={() => {
-              setOpen(false);
+              closeMenu();
               onEdit();
             }}
           >
@@ -94,7 +168,7 @@ function FoodActionMenu({ onEdit, onUpdate, onDelete }) {
             type="button"
             className="block w-full px-3 py-2 text-left text-sm text-[var(--a-text)] transition hover:bg-[var(--a-nav-hover)]"
             onClick={() => {
-              setOpen(false);
+              closeMenu();
               onUpdate();
             }}
           >
@@ -104,12 +178,147 @@ function FoodActionMenu({ onEdit, onUpdate, onDelete }) {
             type="button"
             className="block w-full px-3 py-2 text-left text-sm text-rose-500 transition hover:bg-[var(--a-nav-hover)]"
             onClick={() => {
-              setOpen(false);
+              closeMenu();
               onDelete();
             }}
           >
             Delete
           </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CategoryActionMenu({ onEdit, onDelete }) {
+  const { open, closeMenu, toggleMenu, placement, triggerRef } = useExclusiveActionMenu(96);
+
+  return (
+    <div className="relative z-30 inline-flex shrink-0 justify-end" ref={triggerRef}>
+      <button
+        type="button"
+        className="rounded-md px-2 py-1 text-lg leading-none text-[var(--a-muted)] transition hover:bg-[var(--a-nav-hover)] hover:text-[var(--a-heading)]"
+        aria-label="Category actions"
+        onClick={toggleMenu}
+      >
+        ⋮
+      </button>
+      {open && (
+        <div
+          className={`absolute right-0 z-40 min-w-[128px] overflow-hidden rounded-lg border border-[color:var(--a-border)] bg-[var(--a-card)] py-1 shadow-xl ${menuPlacementClass(placement)}`}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <button
+            type="button"
+            className="block w-full px-3 py-2 text-left text-sm text-[var(--a-text)] transition hover:bg-[var(--a-nav-hover)]"
+            onClick={() => {
+              closeMenu();
+              onEdit();
+            }}
+          >
+            Edit
+          </button>
+          <button
+            type="button"
+            className="block w-full px-3 py-2 text-left text-sm text-rose-500 transition hover:bg-[var(--a-nav-hover)]"
+            onClick={() => {
+              closeMenu();
+              onDelete();
+            }}
+          >
+            Delete
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function roleLabel(role) {
+  if (role === "admin") return "Admin";
+  if (role === "employee") return "Employee";
+  return "Customer";
+}
+
+function UserActionMenu({ user, onView, onMakeEmployee, onMakeAdmin, onRemoveEmployee, onToggleBlock }) {
+  const { open, closeMenu, toggleMenu, placement, triggerRef } = useExclusiveActionMenu(180);
+  const role = user.role || "customer";
+
+  return (
+    <div className="relative inline-flex justify-end" ref={triggerRef}>
+      <button
+        type="button"
+        className="rounded-md px-2 py-1 text-lg leading-none text-[var(--a-muted)] transition hover:bg-[var(--a-nav-hover)] hover:text-[var(--a-heading)]"
+        aria-label="User actions"
+        onClick={toggleMenu}
+      >
+        ⋮
+      </button>
+      {open && (
+        <div
+          className={`absolute right-0 z-30 min-w-[160px] overflow-hidden rounded-lg border border-[color:var(--a-border)] bg-[var(--a-card)] py-1 shadow-xl ${menuPlacementClass(placement)}`}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <button
+            type="button"
+            className="block w-full px-3 py-2 text-left text-sm text-[var(--a-text)] transition hover:bg-[var(--a-nav-hover)]"
+            onClick={() => {
+              closeMenu();
+              onView();
+            }}
+          >
+            View Details
+          </button>
+          {role !== "employee" && (
+            <button
+              type="button"
+              className="block w-full px-3 py-2 text-left text-sm text-[var(--a-text)] transition hover:bg-[var(--a-nav-hover)]"
+              onClick={() => {
+                closeMenu();
+                onMakeEmployee();
+              }}
+            >
+              Make Employee
+            </button>
+          )}
+          {role !== "admin" && (
+            <button
+              type="button"
+              className="block w-full px-3 py-2 text-left text-sm text-[var(--a-text)] transition hover:bg-[var(--a-nav-hover)]"
+              onClick={() => {
+                closeMenu();
+                onMakeAdmin();
+              }}
+            >
+              Make Admin
+            </button>
+          )}
+          {role === "employee" && (
+            <button
+              type="button"
+              className="block w-full px-3 py-2 text-left text-sm text-[var(--a-text)] transition hover:bg-[var(--a-nav-hover)]"
+              onClick={() => {
+                closeMenu();
+                onRemoveEmployee();
+              }}
+            >
+              Remove Employee
+            </button>
+          )}
+          {role !== "admin" && (
+            <button
+              type="button"
+              className={`block w-full px-3 py-2 text-left text-sm transition hover:bg-[var(--a-nav-hover)] ${
+                user.blocked ? "text-emerald-500" : "text-rose-500"
+              }`}
+              onClick={() => {
+                closeMenu();
+                onToggleBlock();
+              }}
+            >
+              {user.blocked ? "Unblock" : "Block"}
+            </button>
+          )}
         </div>
       )}
     </div>
@@ -227,10 +436,32 @@ export default function AdminPage() {
   const [error, setError] = useState("");
   const [activeSection, setActiveSection] = useState("overview");
   const [actionStatus, setActionStatus] = useState({ type: "", message: "" });
+  const [alertPopup, setAlertPopup] = useState({ open: false, type: "success", message: "" });
   const [showLoginBanner, setShowLoginBanner] = useState(true);
   const [foodModal, setFoodModal] = useState({ open: false, mode: "add", foodId: null, menuId: null });
   const [foodForm, setFoodForm] = useState({ fname: "", description: "", categoryId: "", image: "" });
   const [foodSaving, setFoodSaving] = useState(false);
+  const [foodsPage, setFoodsPage] = useState(1);
+  const [foodsSearch, setFoodsSearch] = useState("");
+  const FOODS_PER_PAGE = 8;
+  const [categoryModal, setCategoryModal] = useState({ open: false, mode: "add", categoryId: null });
+  const [categoryForm, setCategoryForm] = useState({ name: "", shortDesc: "", longDesc: "", image: "" });
+  const [categorySaving, setCategorySaving] = useState(false);
+  const [categoriesSearch, setCategoriesSearch] = useState("");
+  const [categoriesPage, setCategoriesPage] = useState(1);
+  const [selectedAdminCategory, setSelectedAdminCategory] = useState(null);
+  const [categoryFoodsPage, setCategoryFoodsPage] = useState(1);
+  const [selectedAdminUser, setSelectedAdminUser] = useState(null);
+  const [showUserPassword, setShowUserPassword] = useState(false);
+  const [revealedUserPassword, setRevealedUserPassword] = useState("");
+  const [passwordRevealLoading, setPasswordRevealLoading] = useState(false);
+  const [adminSetPassword, setAdminSetPassword] = useState("");
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [usersSearch, setUsersSearch] = useState("");
+  const [usersPage, setUsersPage] = useState(1);
+  const CATEGORIES_PER_PAGE = 8;
+  const CATEGORY_FOODS_PER_PAGE = 8;
+  const USERS_PER_PAGE = 10;
   const [hiddenMenuIds, setHiddenMenuIds] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem("adminHiddenMenuFoods") || "[]");
@@ -337,6 +568,143 @@ export default function AdminPage() {
     return [...fromMenu, ...fromDbOnly];
   }, [overview.foods, hiddenMenuIds, imageOverrides]);
 
+  const filteredFoodRows = useMemo(() => {
+    const q = foodsSearch.trim().toLowerCase();
+    if (!q) return adminFoodRows;
+    return adminFoodRows.filter((food) => {
+      const haystack = [food.fname, food.description, food.categoryName]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [adminFoodRows, foodsSearch]);
+
+  const foodsTotalPages = Math.max(1, Math.ceil(filteredFoodRows.length / FOODS_PER_PAGE));
+  const safeFoodsPage = Math.min(foodsPage, foodsTotalPages);
+  const paginatedFoodRows = useMemo(() => {
+    const start = (safeFoodsPage - 1) * FOODS_PER_PAGE;
+    return filteredFoodRows.slice(start, start + FOODS_PER_PAGE);
+  }, [filteredFoodRows, safeFoodsPage]);
+
+  useEffect(() => {
+    if (foodsPage > foodsTotalPages) setFoodsPage(foodsTotalPages);
+  }, [foodsPage, foodsTotalPages]);
+
+  useEffect(() => {
+    setFoodsPage(1);
+  }, [foodsSearch]);
+
+  useEffect(() => {
+    if (activeSection === "foods") {
+      setFoodsPage(1);
+      setFoodsSearch("");
+    }
+    if (activeSection === "categories") {
+      setCategoriesPage(1);
+      setCategoriesSearch("");
+      setSelectedAdminCategory(null);
+      setCategoryFoodsPage(1);
+    }
+    if (activeSection === "users") {
+      setUsersPage(1);
+      setUsersSearch("");
+      setSelectedAdminUser(null);
+      setShowUserPassword(false);
+      setRevealedUserPassword("");
+      setAdminSetPassword("");
+    }
+  }, [activeSection]);
+
+  const adminUserRows = overview.users || [];
+  const filteredUserRows = useMemo(() => {
+    const q = usersSearch.trim().toLowerCase();
+    if (!q) return adminUserRows;
+    return adminUserRows.filter((user) => {
+      const haystack = [user.name, user.email, roleLabel(user.role), user._id]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [adminUserRows, usersSearch]);
+
+  const usersTotalPages = Math.max(1, Math.ceil(filteredUserRows.length / USERS_PER_PAGE));
+  const safeUsersPage = Math.min(usersPage, usersTotalPages);
+  const paginatedUserRows = useMemo(() => {
+    const start = (safeUsersPage - 1) * USERS_PER_PAGE;
+    return filteredUserRows.slice(start, start + USERS_PER_PAGE);
+  }, [filteredUserRows, safeUsersPage]);
+
+  useEffect(() => {
+    if (usersPage > usersTotalPages) setUsersPage(usersTotalPages);
+  }, [usersPage, usersTotalPages]);
+
+  useEffect(() => {
+    setUsersPage(1);
+  }, [usersSearch]);
+
+  useEffect(() => {
+    if (!selectedAdminUser) return;
+    const latest = adminUserRows.find((user) => String(user._id) === String(selectedAdminUser._id));
+    if (latest) setSelectedAdminUser(latest);
+  }, [adminUserRows, selectedAdminUser?._id]);
+
+  const adminCategoryRows = overview.categories || [];
+  const filteredCategoryRows = useMemo(() => {
+    const q = categoriesSearch.trim().toLowerCase();
+    if (!q) return adminCategoryRows;
+    return adminCategoryRows.filter((category) => {
+      const haystack = [category.name, category.shortDesc, category.longDesc]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [adminCategoryRows, categoriesSearch]);
+
+  const categoriesTotalPages = Math.max(1, Math.ceil(filteredCategoryRows.length / CATEGORIES_PER_PAGE));
+  const safeCategoriesPage = Math.min(categoriesPage, categoriesTotalPages);
+  const paginatedCategoryRows = useMemo(() => {
+    const start = (safeCategoriesPage - 1) * CATEGORIES_PER_PAGE;
+    return filteredCategoryRows.slice(start, start + CATEGORIES_PER_PAGE);
+  }, [filteredCategoryRows, safeCategoriesPage]);
+
+  const categoryFoodRows = useMemo(() => {
+    if (!selectedAdminCategory) return [];
+    const categoryId = String(selectedAdminCategory._id || "");
+    const categoryName = String(selectedAdminCategory.name || "")
+      .trim()
+      .toLowerCase();
+    return adminFoodRows.filter((food) => {
+      if (food.categoryId && String(food.categoryId) === categoryId) return true;
+      return String(food.categoryName || "").trim().toLowerCase() === categoryName;
+    });
+  }, [adminFoodRows, selectedAdminCategory]);
+
+  const categoryFoodsTotalPages = Math.max(1, Math.ceil(categoryFoodRows.length / CATEGORY_FOODS_PER_PAGE));
+  const safeCategoryFoodsPage = Math.min(categoryFoodsPage, categoryFoodsTotalPages);
+  const paginatedCategoryFoodRows = useMemo(() => {
+    const start = (safeCategoryFoodsPage - 1) * CATEGORY_FOODS_PER_PAGE;
+    return categoryFoodRows.slice(start, start + CATEGORY_FOODS_PER_PAGE);
+  }, [categoryFoodRows, safeCategoryFoodsPage]);
+
+  useEffect(() => {
+    if (categoriesPage > categoriesTotalPages) setCategoriesPage(categoriesTotalPages);
+  }, [categoriesPage, categoriesTotalPages]);
+
+  useEffect(() => {
+    setCategoriesPage(1);
+  }, [categoriesSearch]);
+
+  useEffect(() => {
+    if (categoryFoodsPage > categoryFoodsTotalPages) setCategoryFoodsPage(categoryFoodsTotalPages);
+  }, [categoryFoodsPage, categoryFoodsTotalPages]);
+
+  useEffect(() => {
+    setCategoryFoodsPage(1);
+  }, [selectedAdminCategory]);
+
   const handleConfirmOrder = async (orderMongoId) => {
     try {
       const res = await api.put(
@@ -442,18 +810,30 @@ export default function AdminPage() {
         const savedId = res?.data?.food?._id;
         if (foodModal.menuId) persistImageOverride(foodModal.menuId, payload.image);
         else if (savedId) persistImageOverride(savedId, payload.image);
-        setActionStatus({ type: "success", message: res?.data?.msg || "Food saved." });
+        const message = res?.data?.msg || `"${payload.fname}" added successfully.`;
+        setActionStatus({ type: "success", message });
+        closeFoodModal();
+        setAlertPopup({ open: true, type: "success", message });
       } else {
         const res = await api.put(`/admin/foods/${foodModal.foodId}`, payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
         persistImageOverride(foodModal.menuId || foodModal.foodId, payload.image);
-        setActionStatus({ type: "success", message: res?.data?.msg || "Food updated." });
+        const message = res?.data?.msg || `"${payload.fname}" updated successfully.`;
+        setActionStatus({ type: "success", message });
+        closeFoodModal();
+        setAlertPopup({ open: true, type: "success", message });
       }
-      closeFoodModal();
       await loadOverview();
     } catch (e) {
-      setActionStatus({ type: "error", message: e?.response?.data?.msg || "Could not save food." });
+      let message = e?.response?.data?.msg || e?.message || "Could not save food.";
+      if (!e?.response) {
+        message = "Server is not reachable. Please start the backend and try again.";
+      } else if (e.response.status === 413) {
+        message = "Image is too large. Please use a smaller image (under 2MB).";
+      }
+      setActionStatus({ type: "error", message });
+      setAlertPopup({ open: true, type: "error", message });
     } finally {
       setFoodSaving(false);
     }
@@ -485,6 +865,108 @@ export default function AdminPage() {
     }
   };
 
+  const openAddCategoryModal = () => {
+    setCategoryForm({ name: "", shortDesc: "", longDesc: "", image: "" });
+    setCategoryModal({ open: true, mode: "add", categoryId: null });
+  };
+
+  const openCategoryItems = (category) => {
+    setSelectedAdminCategory(category);
+    setCategoryFoodsPage(1);
+  };
+
+  const openAddFoodForSelectedCategory = () => {
+    setFoodForm({
+      fname: "",
+      description: "",
+      categoryId: selectedAdminCategory?._id || "",
+      image: "",
+    });
+    setFoodModal({ open: true, mode: "add", foodId: null, menuId: null });
+  };
+
+  const openEditCategoryModal = (category) => {
+    setCategoryForm({
+      name: category.name || "",
+      shortDesc: category.shortDesc || "",
+      longDesc: category.longDesc || "",
+      image: categoryImageFor(category.name, category.image),
+    });
+    setCategoryModal({ open: true, mode: "edit", categoryId: category._id });
+  };
+
+  const closeCategoryModal = () => {
+    setCategoryModal({ open: false, mode: "add", categoryId: null });
+    setCategoryForm({ name: "", shortDesc: "", longDesc: "", image: "" });
+  };
+
+  const handleCategoryImageFile = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setActionStatus({ type: "error", message: "Please choose an image file." });
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setActionStatus({ type: "error", message: "Image must be under 2MB." });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCategoryForm((prev) => ({ ...prev, image: String(reader.result || "") }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSaveCategory = async (event) => {
+    event.preventDefault();
+    if (!categoryForm.name.trim()) {
+      setActionStatus({ type: "error", message: "Category name is required." });
+      return;
+    }
+
+    const payload = {
+      name: categoryForm.name.trim(),
+      shortDesc: categoryForm.shortDesc.trim(),
+      longDesc: categoryForm.longDesc.trim(),
+      image: categoryForm.image.trim(),
+    };
+
+    try {
+      setCategorySaving(true);
+      if (categoryModal.mode === "add" || !categoryModal.categoryId) {
+        const res = await api.post("/admin/categories", payload, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setActionStatus({ type: "success", message: res?.data?.msg || "Category added." });
+      } else {
+        const res = await api.put(`/admin/categories/${categoryModal.categoryId}`, payload, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setActionStatus({ type: "success", message: res?.data?.msg || "Category updated." });
+      }
+      closeCategoryModal();
+      await loadOverview();
+    } catch (e) {
+      setActionStatus({ type: "error", message: e?.response?.data?.msg || "Could not save category." });
+    } finally {
+      setCategorySaving(false);
+    }
+  };
+
+  const handleDeleteCategory = async (category) => {
+    if (!window.confirm(`Delete category "${category.name}"?`)) return;
+    try {
+      const res = await api.delete(`/admin/categories/${category._id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setActionStatus({ type: "success", message: res?.data?.msg || "Category deleted." });
+      await loadOverview();
+    } catch (e) {
+      setActionStatus({ type: "error", message: e?.response?.data?.msg || "Could not delete category." });
+    }
+  };
+
   const handleLogout = () => {
     sessionStorage.removeItem("authToken");
     sessionStorage.removeItem("authUser");
@@ -493,13 +975,152 @@ export default function AdminPage() {
     navigate("/");
   };
 
+  const handleSetUserRole = async (user, role) => {
+    try {
+      const res = await api.put(
+        `/admin/users/${user._id}/role`,
+        { role },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setActionStatus({ type: "success", message: res?.data?.msg || "User role updated." });
+      setAlertPopup({ open: true, type: "success", message: res?.data?.msg || "User role updated." });
+      await loadOverview();
+    } catch (e) {
+      const message = e?.response?.data?.msg || "Could not update user role.";
+      setActionStatus({ type: "error", message });
+      setAlertPopup({ open: true, type: "error", message });
+    }
+  };
+
+  const openUserDetails = (user) => {
+    setSelectedAdminUser(user);
+    setShowUserPassword(false);
+    setRevealedUserPassword("");
+    setAdminSetPassword("");
+  };
+
+  const handleToggleShowUserPassword = async () => {
+    if (showUserPassword) {
+      setShowUserPassword(false);
+      return;
+    }
+    if (revealedUserPassword) {
+      setShowUserPassword(true);
+      return;
+    }
+    if (!selectedAdminUser?._id) return;
+    try {
+      setPasswordRevealLoading(true);
+      const res = await api.get(`/admin/users/${selectedAdminUser._id}/password`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const password = res?.data?.password || "";
+      if (!password) {
+        setAlertPopup({
+          open: true,
+          type: "error",
+          message: res?.data?.msg || "Password not available. Set a new password below.",
+        });
+        return;
+      }
+      setRevealedUserPassword(password);
+      setShowUserPassword(true);
+    } catch (e) {
+      const message = e?.response?.data?.msg || "Could not load password.";
+      setActionStatus({ type: "error", message });
+      setAlertPopup({ open: true, type: "error", message });
+    } finally {
+      setPasswordRevealLoading(false);
+    }
+  };
+
+  const handleAdminSetPassword = async (event) => {
+    event.preventDefault();
+    if (!selectedAdminUser?._id) return;
+    if (!adminSetPassword.trim() || adminSetPassword.trim().length < 4) {
+      setAlertPopup({ open: true, type: "error", message: "Password must be at least 4 characters." });
+      return;
+    }
+    try {
+      setPasswordSaving(true);
+      const res = await api.put(
+        `/admin/users/${selectedAdminUser._id}/password`,
+        { password: adminSetPassword.trim() },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const password = res?.data?.password || adminSetPassword.trim();
+      setRevealedUserPassword(password);
+      setShowUserPassword(true);
+      setAdminSetPassword("");
+      setAlertPopup({ open: true, type: "success", message: res?.data?.msg || "Password updated." });
+    } catch (e) {
+      const message = e?.response?.data?.msg || "Could not set password.";
+      setAlertPopup({ open: true, type: "error", message });
+    } finally {
+      setPasswordSaving(false);
+    }
+  };
+
+  const handleUserPhotoFile = (event) => {
+    const file = event.target.files?.[0];
+    if (!file || !selectedAdminUser?._id) return;
+    if (!file.type.startsWith("image/")) {
+      setActionStatus({ type: "error", message: "Please choose an image file." });
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setActionStatus({ type: "error", message: "Image must be under 2MB." });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const image = String(reader.result || "");
+      try {
+        const res = await api.put(
+          `/admin/users/${selectedAdminUser._id}/image`,
+          { image },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setActionStatus({ type: "success", message: res?.data?.msg || "Photo updated." });
+        await loadOverview();
+      } catch (e) {
+        const message = e?.response?.data?.msg || "Could not update photo.";
+        setActionStatus({ type: "error", message });
+        setAlertPopup({ open: true, type: "error", message });
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleToggleUserBlock = async (user) => {
+    const nextBlocked = !user.blocked;
+    const confirmed = window.confirm(
+      nextBlocked ? `Block "${user.name}"? They will not be able to login.` : `Unblock "${user.name}"?`
+    );
+    if (!confirmed) return;
+    try {
+      const res = await api.put(
+        `/admin/users/${user._id}/block`,
+        { blocked: nextBlocked },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setActionStatus({ type: "success", message: res?.data?.msg || "User updated." });
+      setAlertPopup({ open: true, type: "success", message: res?.data?.msg || "User updated." });
+      await loadOverview();
+    } catch (e) {
+      const message = e?.response?.data?.msg || "Could not update user.";
+      setActionStatus({ type: "error", message });
+      setAlertPopup({ open: true, type: "error", message });
+    }
+  };
+
   const sidebarItems = useMemo(
     () => [
       { id: "overview", label: "Overview", icon: "▦" },
       { id: "foods", label: "Foods", icon: "🍽" },
       { id: "categories", label: "Category", icon: "◼" },
       { id: "orders", label: "Orders", icon: "$" },
-      { id: "about", label: "About", icon: "ℹ" },
+      { id: "users", label: "Users", icon: "👤" },
     ],
     []
   );
@@ -578,8 +1199,8 @@ export default function AdminPage() {
           <Link to="/" className={chromeLink}>
             Main Site!
           </Link>
-          <button type="button" className={chromeLink} onClick={() => setActiveSection("about")}>
-            About
+          <button type="button" className={chromeLink} onClick={() => setActiveSection("users")}>
+            Users
           </button>
           <button type="button" className={chromeLink} onClick={handleLogout}>
             Logout!
@@ -680,16 +1301,30 @@ export default function AdminPage() {
           ) : activeSection === "foods" ? (
             <section className={panelClass}>
               <h2 className="text-center text-3xl font-semibold text-[var(--a-heading)]">Foods</h2>
-              <div className="mt-5 flex items-center justify-between gap-3">
-                <p className="text-sm text-[var(--a-muted)]">{adminFoodRows.length} items from Foods area</p>
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="relative w-full max-w-md">
+                  <input
+                    type="search"
+                    value={foodsSearch}
+                    onChange={(e) => setFoodsSearch(e.target.value)}
+                    placeholder="Search by name, description, or category..."
+                    className="w-full rounded-lg border border-[color:var(--a-border)] bg-[var(--a-bg)] px-3 py-2 text-sm text-[var(--a-heading)] outline-none ring-[#ee6e73]/40 placeholder:text-[var(--a-muted)] focus:ring-2 dark:ring-[#421F37]/60"
+                    aria-label="Search foods"
+                  />
+                </div>
                 <button
                   type="button"
-                  className="rounded-lg bg-[#ee6e73] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-[#e35f66] dark:bg-[#421F37] dark:hover:bg-[#5a2a4a]"
+                  className="shrink-0 rounded-lg bg-[#ee6e73] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-[#e35f66] dark:bg-[#421F37] dark:hover:bg-[#5a2a4a]"
                   onClick={openAddFoodModal}
                 >
                   Add New
                 </button>
               </div>
+              <p className="mt-3 text-sm text-[var(--a-muted)]">
+                Showing {(safeFoodsPage - 1) * FOODS_PER_PAGE + (filteredFoodRows.length ? 1 : 0)}–
+                {Math.min(safeFoodsPage * FOODS_PER_PAGE, filteredFoodRows.length)} of {filteredFoodRows.length}
+                {foodsSearch.trim() ? ` (filtered from ${adminFoodRows.length})` : ""} items
+              </p>
 
               <div className="mt-4 overflow-x-auto">
                 <table className="min-w-full text-left text-sm">
@@ -702,7 +1337,7 @@ export default function AdminPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {adminFoodRows.map((food) => (
+                    {paginatedFoodRows.map((food) => (
                       <tr key={food.key} className={tableRowClass}>
                         <td className="py-3 pr-4 align-top">
                           <div className="flex items-center gap-3">
@@ -727,30 +1362,285 @@ export default function AdminPage() {
                         </td>
                       </tr>
                     ))}
-                    {adminFoodRows.length === 0 && (
+                    {filteredFoodRows.length === 0 && (
                       <tr>
                         <td className="py-6 text-center text-[var(--a-muted)]" colSpan={4}>
-                          No foods found.
+                          {foodsSearch.trim() ? "No foods match your search." : "No foods found."}
                         </td>
                       </tr>
                     )}
                   </tbody>
                 </table>
               </div>
+
+              {filteredFoodRows.length > 0 && (
+                <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-[color:var(--a-border)] pt-4">
+                  <p className="text-xs text-[var(--a-muted)]">
+                    Page {safeFoodsPage} of {foodsTotalPages}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={safeFoodsPage <= 1}
+                      onClick={() => setFoodsPage((p) => Math.max(1, p - 1))}
+                      className="rounded-lg border border-[color:var(--a-border)] px-3 py-1.5 text-xs font-medium text-[var(--a-heading)] transition hover:bg-[var(--a-soft)] disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Previous
+                    </button>
+                    {Array.from({ length: foodsTotalPages }, (_, i) => i + 1).map((page) => (
+                      <button
+                        key={page}
+                        type="button"
+                        onClick={() => setFoodsPage(page)}
+                        className={`min-w-8 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition ${
+                          page === safeFoodsPage
+                            ? "bg-[#ee6e73] text-white dark:bg-[#421F37]"
+                            : "border border-[color:var(--a-border)] text-[var(--a-heading)] hover:bg-[var(--a-soft)]"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      disabled={safeFoodsPage >= foodsTotalPages}
+                      onClick={() => setFoodsPage((p) => Math.min(foodsTotalPages, p + 1))}
+                      className="rounded-lg border border-[color:var(--a-border)] px-3 py-1.5 text-xs font-medium text-[var(--a-heading)] transition hover:bg-[var(--a-soft)] disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
             </section>
           ) : activeSection === "categories" ? (
             <section className={panelClass}>
-              <h2 className="text-2xl font-semibold text-[var(--a-heading)]">Categories</h2>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {["Italian", "Chinese", "Snacks", "Bangladeshi", "Thai"].map((name) => (
-                  <div
-                    key={name}
-                    className="rounded-xl border border-[color:var(--a-border)] bg-[var(--a-inset)] px-4 py-5 text-center text-lg font-medium text-[var(--a-text)]"
-                  >
-                    {name}
+              {selectedAdminCategory ? (
+                <>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedAdminCategory(null)}
+                      className="rounded-lg border border-[color:var(--a-border)] px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--a-heading)] transition hover:bg-[var(--a-soft)]"
+                    >
+                      ← Back to Categories
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded-lg bg-[#ee6e73] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-[#e35f66] dark:bg-[#421F37] dark:hover:bg-[#5a2a4a]"
+                      onClick={openAddFoodForSelectedCategory}
+                    >
+                      Add Food
+                    </button>
                   </div>
-                ))}
-              </div>
+                  <h2 className="mt-4 text-center text-3xl font-semibold text-[var(--a-heading)]">
+                    {selectedAdminCategory.name}
+                  </h2>
+                  <p className="mt-2 text-center text-sm text-[var(--a-muted)]">
+                    {categoryFoodRows.length} food item{categoryFoodRows.length === 1 ? "" : "s"} in this category
+                  </p>
+
+                  <div className="mt-5 overflow-x-auto">
+                    <table className="min-w-full text-left text-sm">
+                      <thead>
+                        <tr className={tableHeadClass}>
+                          <th className="py-3 pr-4 font-semibold">Name</th>
+                          <th className="py-3 pr-4 font-semibold">Description</th>
+                          <th className="py-3 pr-2 text-right font-semibold">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {paginatedCategoryFoodRows.map((food) => (
+                          <tr key={food.key} className={tableRowClass}>
+                            <td className="py-3 pr-4 align-top">
+                              <div className="flex items-center gap-3">
+                                <img
+                                  src={food.image || categoryImageFor(selectedAdminCategory.name) || "/images/Snacks.jpg"}
+                                  alt={food.fname}
+                                  className="h-10 w-10 rounded-md object-cover"
+                                />
+                                <span className="font-medium text-[var(--a-heading)]">{food.fname}</span>
+                              </div>
+                            </td>
+                            <td className="max-w-md py-3 pr-4 align-top text-xs leading-5 text-[var(--a-muted)]">
+                              {food.description || "—"}
+                            </td>
+                            <td className="py-3 pr-2 align-top text-right">
+                              <FoodActionMenu
+                                onEdit={() => openEditFoodModal(food)}
+                                onUpdate={() => openEditFoodModal(food)}
+                                onDelete={() => handleDeleteFood(food)}
+                              />
+                            </td>
+                          </tr>
+                        ))}
+                        {categoryFoodRows.length === 0 && (
+                          <tr>
+                            <td className="py-6 text-center text-[var(--a-muted)]" colSpan={3}>
+                              No foods in this category yet.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {categoryFoodRows.length > 0 && (
+                    <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-[color:var(--a-border)] pt-4">
+                      <p className="text-xs text-[var(--a-muted)]">
+                        Page {safeCategoryFoodsPage} of {categoryFoodsTotalPages}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          disabled={safeCategoryFoodsPage <= 1}
+                          onClick={() => setCategoryFoodsPage((p) => Math.max(1, p - 1))}
+                          className="rounded-lg border border-[color:var(--a-border)] px-3 py-1.5 text-xs font-medium text-[var(--a-heading)] transition hover:bg-[var(--a-soft)] disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          Previous
+                        </button>
+                        <button
+                          type="button"
+                          disabled={safeCategoryFoodsPage >= categoryFoodsTotalPages}
+                          onClick={() => setCategoryFoodsPage((p) => Math.min(categoryFoodsTotalPages, p + 1))}
+                          className="rounded-lg border border-[color:var(--a-border)] px-3 py-1.5 text-xs font-medium text-[var(--a-heading)] transition hover:bg-[var(--a-soft)] disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <h2 className="text-center text-3xl font-semibold text-[var(--a-heading)]">Categories</h2>
+                  <p className="mt-2 text-center text-sm text-[var(--a-muted)]">
+                    Click a category to view its foods. Changes also appear on the public{" "}
+                    <Link to="/food-categories" className="font-medium text-[#ee6e73] underline-offset-2 hover:underline dark:text-[#f0a8ad]">
+                      Categories page
+                    </Link>
+                    .
+                  </p>
+                  <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="relative w-full max-w-md">
+                      <input
+                        type="search"
+                        value={categoriesSearch}
+                        onChange={(e) => setCategoriesSearch(e.target.value)}
+                        placeholder="Search categories..."
+                        className="w-full rounded-lg border border-[color:var(--a-border)] bg-[var(--a-bg)] px-3 py-2 text-sm text-[var(--a-heading)] outline-none ring-[#ee6e73]/40 placeholder:text-[var(--a-muted)] focus:ring-2 dark:ring-[#421F37]/60"
+                        aria-label="Search categories"
+                      />
+                    </div>
+                    <div className="flex shrink-0 flex-wrap items-center gap-2">
+                      <Link
+                        to="/food-categories"
+                        className="rounded-lg border border-[color:var(--a-border)] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--a-heading)] transition hover:bg-[var(--a-soft)]"
+                      >
+                        View Page
+                      </Link>
+                      <button
+                        type="button"
+                        className="rounded-lg bg-[#ee6e73] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-[#e35f66] dark:bg-[#421F37] dark:hover:bg-[#5a2a4a]"
+                        onClick={openAddCategoryModal}
+                      >
+                        Add New
+                      </button>
+                    </div>
+                  </div>
+                  <p className="mt-3 text-sm text-[var(--a-muted)]">
+                    Showing {(safeCategoriesPage - 1) * CATEGORIES_PER_PAGE + (filteredCategoryRows.length ? 1 : 0)}–
+                    {Math.min(safeCategoriesPage * CATEGORIES_PER_PAGE, filteredCategoryRows.length)} of{" "}
+                    {filteredCategoryRows.length}
+                    {categoriesSearch.trim() ? ` (filtered from ${adminCategoryRows.length})` : ""} categories
+                  </p>
+
+                  <div className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                    {paginatedCategoryRows.map((category) => {
+                      const imageSrc = categoryImageFor(category.name, category.image);
+                      const summary =
+                        category.longDesc ||
+                        category.shortDesc ||
+                        "Explore the Foods of this category!";
+                      return (
+                        <div
+                          key={category._id}
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => openCategoryItems(category)}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                              event.preventDefault();
+                              openCategoryItems(category);
+                            }
+                          }}
+                          className="relative cursor-pointer rounded-xl border border-[color:var(--a-border)] bg-white shadow-md transition hover:-translate-y-0.5 hover:shadow-lg dark:bg-[var(--a-inset)]"
+                        >
+                          <div className="food-media-frame h-40 overflow-hidden rounded-t-xl">
+                            <img src={imageSrc} alt={category.name} className="food-media" />
+                          </div>
+                          <div className="p-4">
+                            <div className="flex items-start justify-between gap-2">
+                              <h3 className="text-xl font-semibold text-[var(--a-heading)]">{category.name}</h3>
+                              <CategoryActionMenu
+                                onEdit={() => openEditCategoryModal(category)}
+                                onDelete={() => handleDeleteCategory(category)}
+                              />
+                            </div>
+                            <p className="mt-2 text-sm leading-6 text-[var(--a-muted)]">{summary}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {filteredCategoryRows.length === 0 && (
+                    <p className="mt-6 text-center text-sm text-[var(--a-muted)]">
+                      {categoriesSearch.trim() ? "No categories match your search." : "No categories found."}
+                    </p>
+                  )}
+
+                  {filteredCategoryRows.length > 0 && (
+                    <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-[color:var(--a-border)] pt-4">
+                      <p className="text-xs text-[var(--a-muted)]">
+                        Page {safeCategoriesPage} of {categoriesTotalPages}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          disabled={safeCategoriesPage <= 1}
+                          onClick={() => setCategoriesPage((p) => Math.max(1, p - 1))}
+                          className="rounded-lg border border-[color:var(--a-border)] px-3 py-1.5 text-xs font-medium text-[var(--a-heading)] transition hover:bg-[var(--a-soft)] disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          Previous
+                        </button>
+                        {Array.from({ length: categoriesTotalPages }, (_, i) => i + 1).map((page) => (
+                          <button
+                            key={page}
+                            type="button"
+                            onClick={() => setCategoriesPage(page)}
+                            className={`min-w-8 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition ${
+                              page === safeCategoriesPage
+                                ? "bg-[#ee6e73] text-white dark:bg-[#421F37]"
+                                : "border border-[color:var(--a-border)] text-[var(--a-heading)] hover:bg-[var(--a-soft)]"
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        ))}
+                        <button
+                          type="button"
+                          disabled={safeCategoriesPage >= categoriesTotalPages}
+                          onClick={() => setCategoriesPage((p) => Math.min(categoriesTotalPages, p + 1))}
+                          className="rounded-lg border border-[color:var(--a-border)] px-3 py-1.5 text-xs font-medium text-[var(--a-heading)] transition hover:bg-[var(--a-soft)] disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
             </section>
           ) : activeSection === "orders" ? (
             <section className={`space-y-6 ${panelClass}`}>
@@ -867,14 +1757,256 @@ export default function AdminPage() {
                 </div>
               </div>
             </section>
-          ) : (
-            <section className={`${panelClass} p-6`}>
-              <h2 className="text-2xl font-semibold text-[var(--a-heading)]">About Admin Panel</h2>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-[var(--a-muted)]">
-                Use Overview for restaurant metrics, then manage Foods, Categories, and Orders from the sidebar.
-              </p>
+          ) : activeSection === "users" ? (
+            <section className={panelClass}>
+              {selectedAdminUser ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedAdminUser(null);
+                      setShowUserPassword(false);
+                      setRevealedUserPassword("");
+                    }}
+                    className="rounded-lg border border-[color:var(--a-border)] px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--a-heading)] transition hover:bg-[var(--a-soft)]"
+                  >
+                    ← Back to Users
+                  </button>
+                  <h2 className="mt-4 text-center text-3xl font-semibold text-[var(--a-heading)]">User Details</h2>
+                  <div className="mx-auto mt-6 max-w-xl space-y-3 rounded-xl border border-[color:var(--a-border)] bg-[var(--a-inset)] p-5">
+                    <div className="flex flex-col items-center gap-3 pb-2">
+                      <div className="h-24 w-24 overflow-hidden rounded-full border border-[color:var(--a-border)] bg-[var(--a-card)]">
+                        {selectedAdminUser.image ? (
+                          <img src={selectedAdminUser.image} alt={selectedAdminUser.name} className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-2xl font-semibold text-[var(--a-heading)]">
+                            {String(selectedAdminUser.name || "U")
+                              .trim()
+                              .slice(0, 1)
+                              .toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+                      <label className="inline-flex cursor-pointer items-center rounded-lg border border-[color:var(--a-border)] bg-[var(--a-card)] px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--a-heading)] transition hover:bg-[var(--a-nav-hover)]">
+                        Change Photo
+                        <input type="file" accept="image/*" className="hidden" onChange={handleUserPhotoFile} />
+                      </label>
+                    </div>
+                    <div className="flex justify-between gap-3 text-sm">
+                      <span className="text-[var(--a-muted)]">User ID</span>
+                      <span className="break-all text-right font-medium text-[var(--a-heading)]">{selectedAdminUser._id}</span>
+                    </div>
+                    <div className="flex justify-between gap-3 text-sm">
+                      <span className="text-[var(--a-muted)]">Name</span>
+                      <span className="font-medium text-[var(--a-heading)]">{selectedAdminUser.name}</span>
+                    </div>
+                    <div className="flex justify-between gap-3 text-sm">
+                      <span className="text-[var(--a-muted)]">Mail</span>
+                      <span className="break-all text-right font-medium text-[var(--a-heading)]">{selectedAdminUser.email}</span>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-[var(--a-muted)]">Password</span>
+                        <div className="flex items-center gap-2">
+                          <span className="max-w-[180px] break-all font-medium text-[var(--a-heading)]">
+                            {showUserPassword
+                              ? revealedUserPassword || "Not available"
+                              : selectedAdminUser.passwordDisplay || "••••••••"}
+                          </span>
+                          <button
+                            type="button"
+                            className="rounded-md border border-[color:var(--a-border)] px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--a-heading)] transition hover:bg-[var(--a-card)]"
+                            onClick={handleToggleShowUserPassword}
+                            disabled={passwordRevealLoading}
+                          >
+                            {passwordRevealLoading ? "..." : showUserPassword ? "Hide" : "Show"}
+                          </button>
+                        </div>
+                      </div>
+                      <form className="flex flex-col gap-2 sm:flex-row sm:items-center" onSubmit={handleAdminSetPassword}>
+                        <input
+                          type="text"
+                          value={adminSetPassword}
+                          onChange={(e) => setAdminSetPassword(e.target.value)}
+                          placeholder="Set new password"
+                          className="w-full rounded-lg border border-[color:var(--a-border)] bg-[var(--a-card)] px-3 py-2 text-sm text-[var(--a-heading)] outline-none focus:border-[#ee6e73]"
+                        />
+                        <button
+                          type="submit"
+                          disabled={passwordSaving}
+                          className="shrink-0 rounded-lg bg-[#ee6e73] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-[#e35f66] disabled:opacity-60 dark:bg-[#421F37]"
+                        >
+                          {passwordSaving ? "Saving..." : "Save"}
+                        </button>
+                      </form>
+                    </div>
+                    <div className="flex justify-between gap-3 text-sm">
+                      <span className="text-[var(--a-muted)]">Category</span>
+                      <span className="font-medium text-[var(--a-heading)]">{roleLabel(selectedAdminUser.role)}</span>
+                    </div>
+                    <div className="flex justify-between gap-3 text-sm">
+                      <span className="text-[var(--a-muted)]">Orders purchased</span>
+                      <span className="font-medium text-[var(--a-heading)]">{selectedAdminUser.orderCount || 0}</span>
+                    </div>
+                    <div className="flex justify-between gap-3 text-sm">
+                      <span className="text-[var(--a-muted)]">Status</span>
+                      <span className={`font-medium ${selectedAdminUser.blocked ? "text-rose-500" : "text-emerald-500"}`}>
+                        {selectedAdminUser.blocked ? "Blocked" : "Active"}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+                    {selectedAdminUser.role !== "employee" && (
+                      <button
+                        type="button"
+                        className="rounded-lg border border-[color:var(--a-border)] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--a-heading)] transition hover:bg-[var(--a-soft)]"
+                        onClick={() => handleSetUserRole(selectedAdminUser, "employee")}
+                      >
+                        Make Employee
+                      </button>
+                    )}
+                    {selectedAdminUser.role !== "admin" && (
+                      <button
+                        type="button"
+                        className="rounded-lg border border-[color:var(--a-border)] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--a-heading)] transition hover:bg-[var(--a-soft)]"
+                        onClick={() => handleSetUserRole(selectedAdminUser, "admin")}
+                      >
+                        Make Admin
+                      </button>
+                    )}
+                    {selectedAdminUser.role === "employee" && (
+                      <button
+                        type="button"
+                        className="rounded-lg border border-[color:var(--a-border)] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--a-heading)] transition hover:bg-[var(--a-soft)]"
+                        onClick={() => handleSetUserRole(selectedAdminUser, "customer")}
+                      >
+                        Remove Employee
+                      </button>
+                    )}
+                    {selectedAdminUser.role !== "admin" && (
+                      <button
+                        type="button"
+                        className={`rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white transition ${
+                          selectedAdminUser.blocked
+                            ? "bg-emerald-600 hover:bg-emerald-700"
+                            : "bg-rose-600 hover:bg-rose-700"
+                        }`}
+                        onClick={() => handleToggleUserBlock(selectedAdminUser)}
+                      >
+                        {selectedAdminUser.blocked ? "Unblock" : "Block"}
+                      </button>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h2 className="text-center text-3xl font-semibold text-[var(--a-heading)]">Users</h2>
+                  <p className="mt-2 text-center text-sm text-[var(--a-muted)]">
+                    Click a user to view details. Use ⋮ to manage role or block status.
+                  </p>
+                  <div className="mt-5 max-w-md">
+                    <input
+                      type="search"
+                      value={usersSearch}
+                      onChange={(e) => setUsersSearch(e.target.value)}
+                      placeholder="Search users..."
+                      className="w-full rounded-lg border border-[color:var(--a-border)] bg-[var(--a-bg)] px-3 py-2 text-sm text-[var(--a-heading)] outline-none ring-[#ee6e73]/40 placeholder:text-[var(--a-muted)] focus:ring-2 dark:ring-[#421F37]/60"
+                      aria-label="Search users"
+                    />
+                  </div>
+                  <p className="mt-3 text-sm text-[var(--a-muted)]">
+                    Showing {(safeUsersPage - 1) * USERS_PER_PAGE + (filteredUserRows.length ? 1 : 0)}–
+                    {Math.min(safeUsersPage * USERS_PER_PAGE, filteredUserRows.length)} of {filteredUserRows.length} users
+                  </p>
+                  <div className="mt-4 overflow-x-auto">
+                    <table className="min-w-full text-left text-sm">
+                      <thead>
+                        <tr className={tableHeadClass}>
+                          <th className="py-3 pr-4 font-semibold">Name</th>
+                          <th className="py-3 pr-4 font-semibold">Category</th>
+                          <th className="py-3 pr-2 text-right font-semibold">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {paginatedUserRows.map((user) => (
+                          <tr
+                            key={user._id}
+                            className={`${tableRowClass} cursor-pointer transition hover:bg-[var(--a-soft)]`}
+                            onClick={() => openUserDetails(user)}
+                          >
+                            <td className="py-3 pr-4">
+                              <div className="flex items-center gap-3">
+                                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-[color:var(--a-border)] bg-[var(--a-inset)]">
+                                  {user.image ? (
+                                    <img src={user.image} alt={user.name} className="h-full w-full object-cover" />
+                                  ) : (
+                                    <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-[var(--a-heading)]">
+                                      {String(user.name || "U")
+                                        .trim()
+                                        .slice(0, 1)
+                                        .toUpperCase()}
+                                    </div>
+                                  )}
+                                </div>
+                                <div>
+                                  <div className="font-medium text-[var(--a-heading)]">{user.name}</div>
+                                  <div className="text-xs text-[var(--a-muted)]">{user.email}</div>
+                                  {user.blocked && <div className="mt-0.5 text-xs font-semibold text-rose-500">Blocked</div>}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-3 pr-4 text-[var(--a-heading)]">{roleLabel(user.role)}</td>
+                            <td className="py-3 pr-2 text-right" onClick={(event) => event.stopPropagation()}>
+                              <UserActionMenu
+                                user={user}
+                                onView={() => openUserDetails(user)}
+                                onMakeEmployee={() => handleSetUserRole(user, "employee")}
+                                onMakeAdmin={() => handleSetUserRole(user, "admin")}
+                                onRemoveEmployee={() => handleSetUserRole(user, "customer")}
+                                onToggleBlock={() => handleToggleUserBlock(user)}
+                              />
+                            </td>
+                          </tr>
+                        ))}
+                        {filteredUserRows.length === 0 && (
+                          <tr>
+                            <td className="py-6 text-center text-[var(--a-muted)]" colSpan={3}>
+                              {usersSearch.trim() ? "No users match your search." : "No users found."}
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                  {filteredUserRows.length > 0 && (
+                    <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-[color:var(--a-border)] pt-4">
+                      <p className="text-xs text-[var(--a-muted)]">
+                        Page {safeUsersPage} of {usersTotalPages}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          disabled={safeUsersPage <= 1}
+                          onClick={() => setUsersPage((p) => Math.max(1, p - 1))}
+                          className="rounded-lg border border-[color:var(--a-border)] px-3 py-1.5 text-xs font-medium text-[var(--a-heading)] transition hover:bg-[var(--a-soft)] disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          Previous
+                        </button>
+                        <button
+                          type="button"
+                          disabled={safeUsersPage >= usersTotalPages}
+                          onClick={() => setUsersPage((p) => Math.min(usersTotalPages, p + 1))}
+                          className="rounded-lg border border-[color:var(--a-border)] px-3 py-1.5 text-xs font-medium text-[var(--a-heading)] transition hover:bg-[var(--a-soft)] disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
             </section>
-          )}
+          ) : null}
         </main>
       </div>
 
@@ -960,7 +2092,7 @@ export default function AdminPage() {
                   ))}
                 </select>
                 {(overview.categories || []).length === 0 && (
-                  <p className="mt-1 text-xs text-amber-500">No categories found. Seed categories first.</p>
+                  <p className="mt-1 text-xs text-amber-500">No categories found. Add a category first.</p>
                 )}
               </div>
               <div className="flex justify-end gap-3 pt-2">
@@ -980,6 +2112,125 @@ export default function AdminPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {categoryModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-lg rounded-2xl border border-[color:var(--a-border)] bg-[var(--a-card)] p-5 shadow-2xl">
+            <h3 className="text-xl font-semibold text-[var(--a-heading)]">
+              {categoryModal.mode === "add" ? "Add New Category" : "Update Category"}
+            </h3>
+            <form className="mt-4 space-y-4" onSubmit={handleSaveCategory}>
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[var(--a-muted)]">Image</label>
+                <div className="flex flex-wrap items-start gap-3">
+                  <div className="h-16 w-16 overflow-hidden rounded-lg border border-[color:var(--a-border)] bg-[var(--a-inset)]">
+                    {categoryForm.image ? (
+                      <img src={categoryForm.image} alt="Category preview" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-[10px] text-[var(--a-muted)]">No image</div>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <input
+                      type="text"
+                      value={categoryForm.image.startsWith("data:") ? "" : categoryForm.image}
+                      onChange={(event) => setCategoryForm((prev) => ({ ...prev, image: event.target.value }))}
+                      className="w-full rounded-lg border border-[color:var(--a-border)] bg-[var(--a-inset)] px-3 py-2 text-sm text-[var(--a-heading)] outline-none placeholder:text-[var(--a-muted)] focus:border-[#ee6e73] dark:focus:border-[#f0a8ad]"
+                      placeholder="e.g. /images/Italian.jpg"
+                    />
+                    <label className="inline-flex cursor-pointer items-center rounded-lg border border-[color:var(--a-border)] bg-[var(--a-inset)] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--a-heading)] transition hover:bg-[var(--a-nav-hover)]">
+                      Choose Image
+                      <input type="file" accept="image/*" className="hidden" onChange={handleCategoryImageFile} />
+                    </label>
+                    {categoryForm.image && (
+                      <button
+                        type="button"
+                        className="ml-2 text-xs font-semibold text-rose-500"
+                        onClick={() => setCategoryForm((prev) => ({ ...prev, image: "" }))}
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[var(--a-muted)]">Name</label>
+                <input
+                  type="text"
+                  value={categoryForm.name}
+                  onChange={(event) => setCategoryForm((prev) => ({ ...prev, name: event.target.value }))}
+                  className="w-full rounded-lg border border-[color:var(--a-border)] bg-[var(--a-inset)] px-3 py-2 text-sm text-[var(--a-heading)] outline-none focus:border-[#ee6e73] dark:focus:border-[#f0a8ad]"
+                  placeholder="Category name"
+                  required
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[var(--a-muted)]">
+                  Short Description
+                </label>
+                <input
+                  type="text"
+                  value={categoryForm.shortDesc}
+                  onChange={(event) => setCategoryForm((prev) => ({ ...prev, shortDesc: event.target.value }))}
+                  className="w-full rounded-lg border border-[color:var(--a-border)] bg-[var(--a-inset)] px-3 py-2 text-sm text-[var(--a-heading)] outline-none focus:border-[#ee6e73] dark:focus:border-[#f0a8ad]"
+                  placeholder="Short description"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[var(--a-muted)]">
+                  Long Description
+                </label>
+                <textarea
+                  value={categoryForm.longDesc}
+                  onChange={(event) => setCategoryForm((prev) => ({ ...prev, longDesc: event.target.value }))}
+                  className="min-h-[90px] w-full rounded-lg border border-[color:var(--a-border)] bg-[var(--a-inset)] px-3 py-2 text-sm text-[var(--a-heading)] outline-none focus:border-[#ee6e73] dark:focus:border-[#f0a8ad]"
+                  placeholder="Longer description for the category page"
+                />
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  className="rounded-lg px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--a-muted)] transition hover:bg-[var(--a-nav-hover)]"
+                  onClick={closeCategoryModal}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={categorySaving}
+                  className="rounded-lg bg-[#ee6e73] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-[#e35f66] disabled:opacity-60 dark:bg-[#421F37] dark:hover:bg-[#5a2a4a]"
+                >
+                  {categorySaving ? "Saving..." : categoryModal.mode === "add" ? "Add Category" : "Update"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {alertPopup.open && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-[color:var(--a-border)] bg-[var(--a-card)] p-6 shadow-2xl">
+            <p
+              className={`text-center text-base font-medium ${
+                alertPopup.type === "error" ? "text-rose-500" : "text-[var(--a-heading)]"
+              }`}
+            >
+              {alertPopup.message}
+            </p>
+            <div className="mt-6 flex justify-center">
+              <button
+                type="button"
+                className="rounded-lg bg-[#ee6e73] px-6 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-[#e35f66] dark:bg-[#421F37] dark:hover:bg-[#5a2a4a]"
+                onClick={() => setAlertPopup({ open: false, type: "success", message: "" })}
+              >
+                Ok
+              </button>
+            </div>
           </div>
         </div>
       )}

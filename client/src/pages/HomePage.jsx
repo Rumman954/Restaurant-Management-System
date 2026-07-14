@@ -1,7 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { api } from "../lib/api";
+import { mergeMenuCategories } from "../data/menuCatalog";
 
 export default function HomePage() {
+  const navigate = useNavigate();
   const slides = [
     {
       image: "/images/Snacks.jpg",
@@ -19,28 +22,33 @@ export default function HomePage() {
   const [reviewIndex, setReviewIndex] = useState(0);
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [expandedCategory, setExpandedCategory] = useState(null);
+  const [apiCategories, setApiCategories] = useState([]);
   const touchStartX = useRef(null);
 
-  const featuredCategories = [
-    {
-      title: "Italian",
-      image: "/images/Italian.jpg",
-      details:
-        "Lorem, ipsum dolor sit amet consectetur adipisicing elit. Necessitatibus rerum tempore error placeat ratione quibusdam?",
-    },
-    {
-      title: "Chinese",
-      image: "/images/Chinese.jpg",
-      details:
-        "Lorem ipsum dolor, sit amet consectetur adipisicing elit. Perferendis, quidem corrupti. Libero aspernatur saepe ea?",
-    },
-    {
-      title: "Snacks",
-      image: "/images/Snacks.jpg",
-      details:
-        "Lorem, ipsum dolor sit amet consectetur adipisicing elit. Culpa, laborum necessitatibus? Repudiandae sit amet dolore?",
-    },
-  ];
+  useEffect(() => {
+    let active = true;
+    api
+      .get("/categories")
+      .then((res) => {
+        if (active) setApiCategories(Array.isArray(res.data) ? res.data : []);
+      })
+      .catch(() => {
+        if (active) setApiCategories([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const featuredCategories = useMemo(() => {
+    const all = mergeMenuCategories(apiCategories);
+    return all.slice(0, 3).map((category) => ({
+      id: category.filterId,
+      title: category.name,
+      image: category.image,
+      details: category.longDesc || category.shortDesc || "Explore the foods of this category!",
+    }));
+  }, [apiCategories]);
 
   const galleryImages = [
     "/images/Italian.jpg",
@@ -172,12 +180,16 @@ export default function HomePage() {
 
       <section className="mx-auto grid max-w-6xl gap-5 px-4 pb-2 sm:px-8 md:grid-cols-3 md:gap-6">
         {featuredCategories.map((item) => (
-          <div key={item.title} className="px-1 py-6 sm:py-10">
+          <div
+            key={item.id}
+            className="cursor-pointer px-1 py-6 sm:py-10"
+            onClick={() => navigate(`/foods?category=${item.id}`)}
+          >
             <div className="group h-[350px] sm:h-[380px] [perspective:1000px]">
               <div
                 className="relative h-full w-full rounded-lg transition-transform duration-700 [transform-style:preserve-3d]"
                 style={{
-                  transform: expandedCategory === item.title ? "rotateY(180deg)" : "rotateY(0deg)",
+                  transform: expandedCategory === item.id ? "rotateY(180deg)" : "rotateY(0deg)",
                 }}
               >
                 <article className="absolute inset-0 overflow-hidden rounded-lg bg-white p-0 shadow-sm transition duration-300 group-hover:-translate-y-1 group-hover:shadow-xl [backface-visibility:hidden] dark:bg-zinc-900">
@@ -189,7 +201,10 @@ export default function HomePage() {
                       <h3 className="text-xl font-semibold dark:text-zinc-300">{item.title}</h3>
                       <button
                         type="button"
-                        onClick={() => setExpandedCategory(item.title)}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setExpandedCategory(item.id);
+                        }}
                         className="text-xl leading-none text-zinc-700 dark:text-zinc-300 transition hover:text-zinc-900 dark:hover:text-white"
                         aria-label={`Show ${item.title} details`}
                       >
@@ -207,7 +222,10 @@ export default function HomePage() {
                     <h3 className="text-xl font-semibold dark:text-zinc-300">{item.title}</h3>
                     <button
                       type="button"
-                      onClick={() => setExpandedCategory(null)}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setExpandedCategory(null);
+                      }}
                       className="text-lg font-semibold text-zinc-700 dark:text-zinc-300 transition hover:text-zinc-900 dark:hover:text-white"
                       aria-label={`Close ${item.title} details`}
                     >
@@ -227,7 +245,7 @@ export default function HomePage() {
           to="/food-categories"
           className="brand-btn rounded-md px-5 py-3 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md"
         >
-          More Foods »
+          More Categories »
         </Link>
       </div>
 

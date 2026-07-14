@@ -9,12 +9,20 @@ const router = express.Router();
 
 router.get("/admin/overview", requireAuth, requireAdmin, async (_req, res) => {
   try {
-    const [users, foods, categories, orders] = await Promise.all([
-      User.find().select("-password").sort({ createdAt: -1 }),
+    const [users, foods, categories, orders, orderCounts] = await Promise.all([
+      User.find().select("-password").sort({ createdAt: -1 }).lean(),
       Food.find().populate("categoryId", "name").sort({ createdAt: -1 }),
       Category.find().sort({ name: 1 }),
       Order.find().populate("userId", "name email").sort({ createdAt: -1 }),
+      Order.aggregate([{ $group: { _id: "$userId", count: { $sum: 1 } } }]),
     ]);
+
+    const orderCountMap = new Map(orderCounts.map((row) => [String(row._id), row.count]));
+    const usersWithMeta = users.map((user) => ({
+      ...user,
+      orderCount: orderCountMap.get(String(user._id)) || 0,
+      passwordDisplay: "••••••••",
+    }));
 
     const totalRevenue = orders.reduce((sum, order) => {
       if (order.status !== "delivered") return sum;
@@ -28,11 +36,109 @@ router.get("/admin/overview", requireAuth, requireAdmin, async (_req, res) => {
         totalOrders: orders.length,
         totalRevenue,
       },
-      users,
+      users: usersWithMeta,
       foods,
       categories,
       orders,
     });
+  } catch (error) {
+    res.status(500).json({ code: "0", msg: error.message });
+  }
+});
+
+router.put("/admin/users/:userId/role", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const role = String(req.body?.role || "")
+      .trim()
+      .toLowerCase();
+    if (!["customer", "employee", "admin"].includes(role)) {
+      return res.status(400).json({ code: "0", msg: "Invalid role." });
+    }
+
+    const user = await User.findById(userId).select("-password");
+    if (!user) return res.status(404).json({ code: "0", msg: "User not found." });
+
+    user.role = role;
+    await user.save();
+
+    res.json({ code: "1", msg: `User role updated to ${role}.`, user });
+  } catch (error) {
+    res.status(500).json({ code: "0", msg: error.message });
+  }
+});
+
+router.put("/admin/users/:userId/block", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const blocked = Boolean(req.body?.blocked);
+
+    const user = await User.findById(userId).select("-password");
+    if (!user) return res.status(404).json({ code: "0", msg: "User not found." });
+    if (user.role === "admin" && blocked) {
+      return res.status(400).json({ code: "0", msg: "Admin accounts cannot be blocked." });
+    }
+
+    user.blocked = blocked;
+    await user.save();
+
+    res.json({
+      code: "1",
+      msg: blocked ? "User blocked." : "User unblocked.",
+      user,
+    });
+  } catch (error) {
+    res.status(500).json({ code: "0", msg: error.message });
+  }
+});
+
+router.get("/admin/users/:userId/password", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId).select("+passwordPlain name email");
+    if (!user) return res.status(404).json({ code: "0", msg: "User not found." });
+    const password = user.passwordPlain || "";
+    if (!password) {
+      return res.status(404).json({
+        code: "0",
+        msg: "Password not available yet. Ask this user to login once, or set a new password below.",
+        password: "",
+      });
+    }
+    res.json({ code: "1", msg: "Password loaded.", password });
+  } catch (error) {
+    res.status(500).json({ code: "0", msg: error.message });
+  }
+});
+
+router.put("/admin/users/:userId/password", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const bcrypt = require("bcryptjs");
+    const nextPassword = String(req.body?.password || "").trim();
+    if (!nextPassword || nextPassword.length < 4) {
+      return res.status(400).json({ code: "0", msg: "Password must be at least 4 characters." });
+    }
+
+    const user = await User.findById(req.params.userId).select("+passwordPlain");
+    if (!user) return res.status(404).json({ code: "0", msg: "User not found." });
+
+    user.password = await bcrypt.hash(nextPassword, 10);
+    user.passwordPlain = nextPassword;
+    await user.save();
+
+    res.json({ code: "1", msg: "Password updated.", password: nextPassword });
+  } catch (error) {
+    res.status(500).json({ code: "0", msg: error.message });
+  }
+});
+
+router.put("/admin/users/:userId/image", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const image = req.body?.image !== undefined ? String(req.body.image).trim() : "";
+    const user = await User.findById(req.params.userId).select("-password -passwordPlain");
+    if (!user) return res.status(404).json({ code: "0", msg: "User not found." });
+    user.image = image;
+    await user.save();
+    res.json({ code: "1", msg: "User photo updated.", user });
   } catch (error) {
     res.status(500).json({ code: "0", msg: error.message });
   }
@@ -96,6 +202,73 @@ router.delete("/admin/foods/:foodId", requireAuth, requireAdmin, async (req, res
     const deleted = await Food.findByIdAndDelete(foodId);
     if (!deleted) return res.status(404).json({ code: "0", msg: "Food not found." });
     res.json({ code: "1", msg: "Food deleted." });
+  } catch (error) {
+    res.status(500).json({ code: "0", msg: error.message });
+  }
+});
+
+router.post("/admin/categories", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { name, shortDesc, longDesc, image } = req.body;
+    if (!name || !String(name).trim()) return res.status(400).json({ code: "0", msg: "Category name is required." });
+
+    const exists = await Category.findOne({ name: String(name).trim() });
+    if (exists) return res.status(400).json({ code: "0", msg: "Category already exists." });
+
+    const category = await Category.create({
+      name: String(name).trim(),
+      shortDesc: shortDesc ? String(shortDesc).trim() : "",
+      longDesc: longDesc ? String(longDesc).trim() : "",
+      image: image ? String(image).trim() : "",
+    });
+
+    res.status(201).json({ code: "1", msg: "Category added.", category });
+  } catch (error) {
+    res.status(500).json({ code: "0", msg: error.message });
+  }
+});
+
+router.put("/admin/categories/:categoryId", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { categoryId } = req.params;
+    const { name, shortDesc, longDesc, image } = req.body;
+
+    const category = await Category.findById(categoryId);
+    if (!category) return res.status(404).json({ code: "0", msg: "Category not found." });
+
+    if (name !== undefined) {
+      if (!String(name).trim()) return res.status(400).json({ code: "0", msg: "Category name is required." });
+      const duplicate = await Category.findOne({ name: String(name).trim(), _id: { $ne: categoryId } });
+      if (duplicate) return res.status(400).json({ code: "0", msg: "Category already exists." });
+      category.name = String(name).trim();
+    }
+    if (shortDesc !== undefined) category.shortDesc = String(shortDesc).trim();
+    if (longDesc !== undefined) category.longDesc = String(longDesc).trim();
+    if (image !== undefined) category.image = String(image).trim();
+
+    await category.save();
+    res.json({ code: "1", msg: "Category updated.", category });
+  } catch (error) {
+    res.status(500).json({ code: "0", msg: error.message });
+  }
+});
+
+router.delete("/admin/categories/:categoryId", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { categoryId } = req.params;
+    const category = await Category.findById(categoryId);
+    if (!category) return res.status(404).json({ code: "0", msg: "Category not found." });
+
+    const foodCount = await Food.countDocuments({ categoryId });
+    if (foodCount > 0) {
+      return res.status(400).json({
+        code: "0",
+        msg: `Cannot delete. ${foodCount} food(s) still use this category.`,
+      });
+    }
+
+    await Category.findByIdAndDelete(categoryId);
+    res.json({ code: "1", msg: "Category deleted." });
   } catch (error) {
     res.status(500).json({ code: "0", msg: error.message });
   }

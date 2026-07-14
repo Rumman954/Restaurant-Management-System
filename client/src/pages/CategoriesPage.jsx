@@ -1,58 +1,44 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { api } from "../lib/api";
+import { mergeMenuCategories } from "../data/menuCatalog";
 
 export default function CategoriesPage() {
   const navigate = useNavigate();
   const [expandedCategory, setExpandedCategory] = useState(null);
+  const [apiCategories, setApiCategories] = useState([]);
 
-  const categories = [
-    {
-      _id: "italian",
-      name: "Italian",
-      image: "/images/Italian.jpg",
-      longDesc: "This is a popular category of Bangladesh. Explore the Foods of this category!",
-    },
-    {
-      _id: "chinese",
-      name: "Chinese",
-      image: "/images/Chinese.jpg",
-      longDesc: "This is a popular category of Bangladesh. Explore the Foods of this category!",
-    },
-    {
-      _id: "snacks",
-      name: "Snacks",
-      image: "/images/Snacks.jpg",
-      longDesc: "This is a popular category of Bangladesh. Explore the Foods of this category!",
-    },
-    {
-      _id: "bangladeshi",
-      name: "Bangladeshi",
-      image: "/images/Bangldeshi.jpg",
-      longDesc: "This is a popular category of Bangladesh. Explore the Foods of this category!",
-    },
-    {
-      _id: "thai",
-      name: "Thai",
-      image: "/images/Thai.jpg",
-      longDesc: "This is a popular category of Bangladesh. Explore the Foods of this category!",
-    },
-  ];
+  useEffect(() => {
+    let active = true;
+    api
+      .get("/categories")
+      .then((res) => {
+        if (active) setApiCategories(Array.isArray(res.data) ? res.data : []);
+      })
+      .catch(() => {
+        if (active) setApiCategories([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const categories = useMemo(() => mergeMenuCategories(apiCategories), [apiCategories]);
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-10 sm:py-12">
       <h1 className="mb-8 text-center text-4xl font-medium text-zinc-800 dark:text-zinc-300 sm:text-5xl">Categories</h1>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {categories.map((category) => {
-          const id = category._id;
-          const summary = category.longDesc;
+          const id = category.filterId;
+          const summary = category.longDesc || category.shortDesc;
           const image = category.image;
           const isExpanded = expandedCategory === id;
 
           return (
-            <button
+            <div
               key={id}
-              type="button"
-              className="group h-[280px] w-full perspective-[1000px] transition-transform duration-300 hover:-translate-y-1"
+              className="group h-[280px] w-full cursor-pointer perspective-[1000px] transition-transform duration-300 hover:-translate-y-1"
               onClick={() => navigate(`/foods?category=${id}`)}
             >
               <div
@@ -104,7 +90,7 @@ export default function CategoriesPage() {
                   <p className="mt-3 text-sm leading-6 text-zinc-600 dark:text-zinc-400">{summary}</p>
                 </article>
               </div>
-            </button>
+            </div>
           );
         })}
       </div>
