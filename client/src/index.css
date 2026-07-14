@@ -4,8 +4,8 @@
 
 body {
   margin: 0;
-  background: #fafafa;
-  color: #1f2937;
+  background: #f4f4f5;
+  color: #3f3f46;
   font-family: Arial, Helvetica, sans-serif;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
@@ -56,28 +56,39 @@ html.dark .food-illustration {
   opacity: 0.92;
 }
 
-/* Brand accents — bright coral by day, dark coral at night */
+/* Site chrome — original coral #ee6e73 in light mode, dark panel at night */
 .brand-bar {
   background-color: #ee6e73;
   border-bottom-color: #fda4af;
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(238, 110, 115, 0.25);
 }
 
 html.dark .brand-bar {
-  background-color: #b84a52;
-  border-bottom-color: #c75b63;
+  background: #421f37;
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+  color: #e4e4e7;
+  box-shadow: none;
+}
+
+.brand-bar-link {
+  color: inherit;
 }
 
 .brand-bar-link:hover,
 .brand-bar-link:active {
   background-color: #e35f66;
+  color: #ffffff;
 }
 
 html.dark .brand-bar-link:hover {
-  background-color: #a6434b;
+  background-color: rgba(238, 110, 115, 0.22);
+  color: #fda4af;
 }
 
 html.dark .brand-bar-link:active {
-  background-color: #943a41;
+  background-color: rgba(238, 110, 115, 0.32);
+  color: #fecdd3;
 }
 
 .brand-btn {
@@ -94,15 +105,15 @@ html.dark .brand-bar-link:active {
 }
 
 html.dark .brand-btn {
-  background-color: #b84a52;
+  background-color: #421f37;
 }
 
 html.dark .brand-btn:hover {
-  background-color: #c75b63;
+  background-color: #5a2a4a;
 }
 
 html.dark .brand-btn:active {
-  background-color: #a6434b;
+  background-color: #34182b;
 }
 
 .brand-chip {
@@ -111,36 +122,33 @@ html.dark .brand-btn:active {
 }
 
 html.dark .brand-chip {
-  background-color: #b84a52;
+  background-color: #421f37;
 }
 
 .brand-footer {
   background-color: #ee6e73;
-  color: #fff;
+  color: #ffffff;
+  border-top: none;
 }
 
 html.dark .brand-footer {
-  background-color: #b84a52;
-  border-top: none;
+  background: #421f37;
+  color: #c8c9ce;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .brand-review {
   background-color: #ee6e73;
-  color: #fff;
-}
-
-html.dark .brand-review {
-  background-color: #b84a52;
+  color: #ffffff;
   border: none;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 10px 24px rgba(238, 110, 115, 0.3);
 }
 
-html.dark .brand-bar,
-html.dark .brand-footer,
-html.dark .brand-btn,
-html.dark .brand-chip,
 html.dark .brand-review {
-  color: rgba(255, 255, 255, 0.88);
+  background-color: #421f37;
+  color: rgba(255, 255, 255, 0.92);
+  border: none;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
 }
 
 .brand-logo {

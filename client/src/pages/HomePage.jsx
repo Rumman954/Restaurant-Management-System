@@ -312,8 +312,8 @@ export default function HomePage() {
                   zIndex,
                 }}
               >
-                <p className="text-[11px] font-semibold leading-6 sm:text-[13px] sm:leading-7">"{review.text}"</p>
-                <p className={`mt-2 text-sm font-semibold sm:mt-3 sm:text-base ${isCenter ? "opacity-100" : "opacity-90"}`}>{review.name}</p>
+                <p className="text-[11px] font-semibold leading-6 text-white/95 sm:text-[13px] sm:leading-7">"{review.text}"</p>
+                <p className={`mt-2 text-sm font-semibold text-white sm:mt-3 sm:text-base ${isCenter ? "opacity-100" : "opacity-90"}`}>{review.name}</p>
               </article>
             );
           })}

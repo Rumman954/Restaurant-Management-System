@@ -337,11 +337,11 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="brand-bar sticky top-0 z-40 border-b text-white shadow-sm">
+      <header className="brand-bar sticky top-0 z-40 border-b shadow-sm">
         <nav className="relative mx-auto flex h-16 w-full max-w-7xl items-center justify-center px-4 sm:px-6 lg:justify-between lg:px-8">
         <Link
           to="/"
-          className="brand-logo text-4xl leading-none tracking-wide text-white transition hover:text-rose-100 lg:text-3xl"
+          className="brand-logo text-4xl leading-none tracking-wide text-white transition hover:text-rose-100 dark:text-rose-300 dark:hover:text-rose-200 lg:text-3xl"
           onClick={goToHomeTop}
         >
           Restaurant
@@ -353,7 +353,7 @@ export default function Navbar() {
               <button
                 key={item.label}
                 type="button"
-                className="brand-bar-link rounded-md px-2 py-1 text-white/95 transition-colors duration-200 hover:text-white"
+                className="brand-bar-link rounded-md px-2 py-1 transition-colors duration-200"
                 onClick={() => setIsContactOpen(true)}
               >
                 {item.label}
@@ -362,7 +362,7 @@ export default function Navbar() {
               <Link
                 key={item.label}
                 to={item.to}
-                className="brand-bar-link rounded-md px-2 py-1 text-white/95 transition-colors duration-200 hover:text-white"
+                className="brand-bar-link rounded-md px-2 py-1 transition-colors duration-200"
                 onClick={item.label === "Home" ? goToHomeTop : undefined}
               >
                 {item.label}
@@ -374,7 +374,7 @@ export default function Navbar() {
         <div className="hidden items-center gap-3 lg:flex">
           <button
             type="button"
-            className="rounded-full border border-white/80 px-3 py-2 text-sm font-semibold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-white/10"
+            className="rounded-full border border-white/70 px-3 py-2 text-sm font-semibold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-white/10 dark:border-white/15 dark:text-zinc-200 dark:hover:bg-white/5"
             onClick={toggleTheme}
             aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
           >
@@ -383,7 +383,7 @@ export default function Navbar() {
           {authUser && (
             <button
               type="button"
-              className="text-sm font-semibold text-white transition hover:text-rose-100"
+              className="text-sm font-semibold text-white transition hover:text-rose-100 dark:text-zinc-200 dark:hover:text-rose-300"
               onClick={openProfileModal}
             >
               Hi, {surname || authUser.name}
@@ -394,7 +394,7 @@ export default function Navbar() {
               <button
                 key={item.label}
                 type="button"
-                className="rounded-full border border-white/80 px-4 py-2 text-sm font-semibold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-white/10"
+                className="rounded-full border border-white/70 px-4 py-2 text-sm font-semibold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-white/10 dark:border-white/15 dark:text-zinc-200 dark:hover:bg-white/5"
                 onClick={openLoginModal}
               >
                 {item.label}
@@ -404,7 +404,7 @@ export default function Navbar() {
               <button
                 key={item.label}
                 type="button"
-                className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-rose-600 transition duration-200 hover:-translate-y-0.5 hover:bg-rose-50 hover:shadow-sm"
+                className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-rose-600 transition duration-200 hover:-translate-y-0.5 hover:bg-rose-50 hover:shadow-sm dark:bg-[#421F37] dark:text-white dark:hover:bg-[#5a2a4a]"
                 onClick={openRegisterModal}
               >
                 {item.label}
@@ -413,7 +413,7 @@ export default function Navbar() {
                 <button
                   key={item.label}
                   type="button"
-                  className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-rose-600 transition duration-200 hover:-translate-y-0.5 hover:bg-rose-50 hover:shadow-sm"
+                  className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-rose-600 transition duration-200 hover:-translate-y-0.5 hover:bg-rose-50 hover:shadow-sm dark:bg-[#421F37] dark:text-white dark:hover:bg-[#5a2a4a]"
                   onClick={handleLogout}
                 >
                   {item.label}
@@ -422,7 +422,7 @@ export default function Navbar() {
                 <Link
                   key={item.label}
                   to={item.to}
-                  className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-rose-600 transition duration-200 hover:-translate-y-0.5 hover:bg-rose-50 hover:shadow-sm"
+                  className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-rose-600 transition duration-200 hover:-translate-y-0.5 hover:bg-rose-50 hover:shadow-sm dark:bg-[#421F37] dark:text-white dark:hover:bg-[#5a2a4a]"
                 >
                   {item.label}
                 </Link>
@@ -433,7 +433,7 @@ export default function Navbar() {
 
         <button
           type="button"
-          className="absolute left-4 inline-flex items-center rounded-md p-2 text-white transition hover:bg-white/10 lg:hidden"
+          className="absolute left-4 inline-flex items-center rounded-md p-2 text-white transition hover:bg-white/10 dark:text-zinc-200 dark:hover:bg-white/5 lg:hidden"
           onClick={() => setIsMenuOpen((prev) => !prev)}
           aria-expanded={isMenuOpen}
           aria-label="Toggle navigation menu"
@@ -478,7 +478,7 @@ export default function Navbar() {
                   <button
                     key={item.label}
                     type="button"
-                    className="rounded-md px-3 py-2 text-left text-base font-medium text-zinc-700 dark:text-zinc-300 transition-colors duration-200 hover:bg-rose-50 hover:text-zinc-800 dark:text-zinc-300 active:bg-rose-200 active:text-rose-800 focus-visible:bg-rose-50 focus-visible:text-zinc-800 dark:text-zinc-300 [-webkit-tap-highlight-color:transparent]"
+                    className="rounded-md px-3 py-2 text-left text-base font-medium text-zinc-700 dark:text-zinc-300 transition-colors duration-200 hover:bg-rose-50 hover:text-zinc-800 dark:text-zinc-300 active:bg-rose-200 active:text-rose-900 focus-visible:bg-rose-50 focus-visible:text-zinc-800 dark:text-zinc-300 [-webkit-tap-highlight-color:transparent]"
                     onClick={() => {
                       setIsMenuOpen(false);
                       setIsContactOpen(true);
@@ -490,7 +490,7 @@ export default function Navbar() {
                   <button
                     key={item.label}
                     type="button"
-                    className="rounded-md px-3 py-2 text-left text-base font-medium text-zinc-700 dark:text-zinc-300 transition-colors duration-200 hover:bg-rose-50 hover:text-zinc-800 dark:text-zinc-300 active:bg-rose-200 active:text-rose-800 focus-visible:bg-rose-50 focus-visible:text-zinc-800 dark:text-zinc-300 [-webkit-tap-highlight-color:transparent]"
+                    className="rounded-md px-3 py-2 text-left text-base font-medium text-zinc-700 dark:text-zinc-300 transition-colors duration-200 hover:bg-rose-50 hover:text-zinc-800 dark:text-zinc-300 active:bg-rose-200 active:text-rose-900 focus-visible:bg-rose-50 focus-visible:text-zinc-800 dark:text-zinc-300 [-webkit-tap-highlight-color:transparent]"
                     onClick={() => {
                       setIsMenuOpen(false);
                       openLoginModal();
@@ -502,7 +502,7 @@ export default function Navbar() {
                   <button
                     key={item.label}
                     type="button"
-                    className="rounded-md px-3 py-2 text-left text-base font-medium text-zinc-700 dark:text-zinc-300 transition-colors duration-200 hover:bg-rose-50 hover:text-zinc-800 dark:text-zinc-300 active:bg-rose-200 active:text-rose-800 focus-visible:bg-rose-50 focus-visible:text-zinc-800 dark:text-zinc-300 [-webkit-tap-highlight-color:transparent]"
+                    className="rounded-md px-3 py-2 text-left text-base font-medium text-zinc-700 dark:text-zinc-300 transition-colors duration-200 hover:bg-rose-50 hover:text-zinc-800 dark:text-zinc-300 active:bg-rose-200 active:text-rose-900 focus-visible:bg-rose-50 focus-visible:text-zinc-800 dark:text-zinc-300 [-webkit-tap-highlight-color:transparent]"
                     onClick={() => {
                       setIsMenuOpen(false);
                       openRegisterModal();
@@ -514,7 +514,7 @@ export default function Navbar() {
                   <button
                     key={item.label}
                     type="button"
-                    className="rounded-md px-3 py-2 text-left text-base font-medium text-zinc-700 dark:text-zinc-300 transition-colors duration-200 hover:bg-rose-50 hover:text-zinc-800 dark:text-zinc-300 active:bg-rose-200 active:text-rose-800 focus-visible:bg-rose-50 focus-visible:text-zinc-800 dark:text-zinc-300 [-webkit-tap-highlight-color:transparent]"
+                    className="rounded-md px-3 py-2 text-left text-base font-medium text-zinc-700 dark:text-zinc-300 transition-colors duration-200 hover:bg-rose-50 hover:text-zinc-800 dark:text-zinc-300 active:bg-rose-200 active:text-rose-900 focus-visible:bg-rose-50 focus-visible:text-zinc-800 dark:text-zinc-300 [-webkit-tap-highlight-color:transparent]"
                     onClick={handleLogout}
                   >
                     {item.label}
@@ -523,7 +523,7 @@ export default function Navbar() {
                   <Link
                     key={item.label}
                     to={item.to}
-                    className="rounded-md px-3 py-2 text-base font-medium text-zinc-700 dark:text-zinc-300 transition-colors duration-200 hover:bg-rose-50 hover:text-zinc-800 dark:text-zinc-300 active:bg-rose-200 active:text-rose-800 focus-visible:bg-rose-50 focus-visible:text-zinc-800 dark:text-zinc-300 [-webkit-tap-highlight-color:transparent]"
+                    className="rounded-md px-3 py-2 text-base font-medium text-zinc-700 dark:text-zinc-300 transition-colors duration-200 hover:bg-rose-50 hover:text-zinc-800 dark:text-zinc-300 active:bg-rose-200 active:text-rose-900 focus-visible:bg-rose-50 focus-visible:text-zinc-800 dark:text-zinc-300 [-webkit-tap-highlight-color:transparent]"
                     onClick={item.label === "Home" ? goToHomeTop : () => setIsMenuOpen(false)}
                   >
                     {item.label}
@@ -715,7 +715,7 @@ export default function Navbar() {
                     setLoginStatus({ type: "", message: "" });
                   }}
                   className={`w-full rounded-lg border px-3 py-2.5 text-zinc-800 dark:text-zinc-300 outline-none placeholder:text-zinc-400 focus:ring-2 ${
-                    fieldErrors.email ? "border-rose-500 focus:ring-rose-100" : "border-zinc-300 dark:border-zinc-600 focus:border-rose-400 focus:ring-rose-100"
+                    fieldErrors.email ? "border-rose-500 focus:ring-rose-100" : "border-zinc-300 dark:border-zinc-600 focus:border-[#ee6e73] dark:focus:border-[#421F37] focus:ring-rose-100"
                   }`}
                 />
                 {fieldErrors.email && <p className="mt-1 text-xs text-rose-600">{fieldErrors.email}</p>}
@@ -736,7 +736,7 @@ export default function Navbar() {
                       setLoginStatus({ type: "", message: "" });
                     }}
                     className={`w-full rounded-lg border px-3 py-2.5 pr-10 text-zinc-800 dark:text-zinc-300 outline-none placeholder:text-zinc-400 focus:ring-2 ${
-                      fieldErrors.password ? "border-rose-500 focus:ring-rose-100" : "border-zinc-300 dark:border-zinc-600 focus:border-rose-400 focus:ring-rose-100"
+                      fieldErrors.password ? "border-rose-500 focus:ring-rose-100" : "border-zinc-300 dark:border-zinc-600 focus:border-[#ee6e73] dark:focus:border-[#421F37] focus:ring-rose-100"
                     }`}
                   />
                   <button
@@ -814,7 +814,7 @@ export default function Navbar() {
               If you don&apos;t have account{" "}
               <button
                 type="button"
-                className="font-semibold text-rose-600 transition hover:text-rose-700"
+                className="font-semibold text-rose-600 transition hover:text-rose-700 dark:text-rose-300 dark:hover:text-rose-200"
                 onClick={switchToRegisterFromLogin}
               >
                 Register
@@ -985,7 +985,7 @@ export default function Navbar() {
                         <span
                           className={`rounded px-2 py-0.5 text-[11px] font-semibold uppercase ${
                             order.status === "delivered"
-                              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+                              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-rose-300"
                               : order.status === "progress"
                                 ? "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
                                 : "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:text-zinc-300"
