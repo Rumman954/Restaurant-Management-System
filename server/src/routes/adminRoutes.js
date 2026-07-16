@@ -146,9 +146,14 @@ router.put("/admin/users/:userId/image", requireAuth, requireAdmin, async (req, 
 
 router.post("/admin/foods", requireAuth, requireAdmin, async (req, res) => {
   try {
-    const { fname, description, categoryId, image } = req.body;
+    const { fname, description, categoryId, image, price } = req.body;
     if (!fname || !String(fname).trim()) return res.status(400).json({ code: "0", msg: "Food name is required." });
     if (!categoryId) return res.status(400).json({ code: "0", msg: "Category is required." });
+
+    const parsedPrice = Number(price);
+    if (price !== undefined && price !== "" && (Number.isNaN(parsedPrice) || parsedPrice < 0)) {
+      return res.status(400).json({ code: "0", msg: "Price must be a valid number (0 or greater)." });
+    }
 
     const category = await Category.findById(categoryId);
     if (!category) return res.status(400).json({ code: "0", msg: "Category not found." });
@@ -158,6 +163,7 @@ router.post("/admin/foods", requireAuth, requireAdmin, async (req, res) => {
       description: description ? String(description).trim() : "",
       categoryId,
       image: image ? String(image).trim() : "",
+      price: parsedPrice > 0 ? parsedPrice : 0,
     });
     await food.populate("categoryId", "name");
 
@@ -170,7 +176,7 @@ router.post("/admin/foods", requireAuth, requireAdmin, async (req, res) => {
 router.put("/admin/foods/:foodId", requireAuth, requireAdmin, async (req, res) => {
   try {
     const { foodId } = req.params;
-    const { fname, description, categoryId, image } = req.body;
+    const { fname, description, categoryId, image, price } = req.body;
 
     const food = await Food.findById(foodId);
     if (!food) return res.status(404).json({ code: "0", msg: "Food not found." });
@@ -181,6 +187,13 @@ router.put("/admin/foods/:foodId", requireAuth, requireAdmin, async (req, res) =
     }
     if (description !== undefined) food.description = String(description).trim();
     if (image !== undefined) food.image = String(image).trim();
+    if (price !== undefined) {
+      const parsedPrice = Number(price);
+      if (price !== "" && (Number.isNaN(parsedPrice) || parsedPrice < 0)) {
+        return res.status(400).json({ code: "0", msg: "Price must be a valid number (0 or greater)." });
+      }
+      food.price = parsedPrice > 0 ? parsedPrice : 0;
+    }
     if (categoryId !== undefined) {
       const category = await Category.findById(categoryId);
       if (!category) return res.status(400).json({ code: "0", msg: "Category not found." });

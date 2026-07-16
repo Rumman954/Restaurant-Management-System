@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
+import { formatPrice } from "../lib/formatPrice";
 import { useTheme } from "../context/ThemeContext";
 import { MENU_FOODS, categoryImageFor, categoryLabel } from "../data/menuCatalog";
 
@@ -42,7 +43,7 @@ function OverviewPie({ users, orders, revenue, items }) {
             <span className="h-3 w-3 rounded-full bg-[#ee6e73]" /> Orders: {orders} ({Math.round(ordersPct)}%)
           </span>
           <span className="inline-flex items-center gap-2">
-            <span className="h-3 w-3 rounded-full bg-emerald-500" /> Revenue: ${Number(revenue).toFixed(2)} ({Math.round(revenuePct)}%)
+            <span className="h-3 w-3 rounded-full bg-emerald-500" /> Revenue: {formatPrice(revenue) || "৳0"} ({Math.round(revenuePct)}%)
           </span>
         </div>
       </div>
@@ -439,7 +440,7 @@ export default function AdminPage() {
   const [alertPopup, setAlertPopup] = useState({ open: false, type: "success", message: "" });
   const [showLoginBanner, setShowLoginBanner] = useState(true);
   const [foodModal, setFoodModal] = useState({ open: false, mode: "add", foodId: null, menuId: null });
-  const [foodForm, setFoodForm] = useState({ fname: "", description: "", categoryId: "", image: "" });
+  const [foodForm, setFoodForm] = useState({ fname: "", description: "", categoryId: "", image: "", price: "" });
   const [foodSaving, setFoodSaving] = useState(false);
   const [foodsPage, setFoodsPage] = useState(1);
   const [foodsSearch, setFoodsSearch] = useState("");
@@ -546,6 +547,7 @@ export default function AdminPage() {
         dbId: db?._id || null,
         fname: db?.fname || food.fname,
         description: db?.description || food.description,
+        price: Number(db?.price) > 0 ? Number(db.price) : 0,
         categoryName: db?.categoryId?.name || categoryLabel(food.categoryId),
         categoryId: db?.categoryId?._id || db?.categoryId || "",
         image: overrideImage || db?.image || food.image || "",
@@ -560,6 +562,7 @@ export default function AdminPage() {
         dbId: food._id,
         fname: food.fname,
         description: food.description || "",
+        price: Number(food.price) > 0 ? Number(food.price) : 0,
         categoryName: food.categoryId?.name || "—",
         categoryId: food.categoryId?._id || food.categoryId || "",
         image: imageOverrides[food._id] || food.image || "",
@@ -734,7 +737,7 @@ export default function AdminPage() {
   };
 
   const openAddFoodModal = () => {
-    setFoodForm({ fname: "", description: "", categoryId: "", image: "" });
+    setFoodForm({ fname: "", description: "", categoryId: "", image: "", price: "" });
     setFoodModal({ open: true, mode: "add", foodId: null, menuId: null });
   };
 
@@ -748,13 +751,14 @@ export default function AdminPage() {
       description: food.description || "",
       categoryId: matchedCategory,
       image: food.image || "",
+      price: Number(food.price) > 0 ? String(food.price) : "",
     });
     setFoodModal({ open: true, mode: "edit", foodId: food.dbId, menuId: food.menuId });
   };
 
   const closeFoodModal = () => {
     setFoodModal({ open: false, mode: "add", foodId: null, menuId: null });
-    setFoodForm({ fname: "", description: "", categoryId: "", image: "" });
+    setFoodForm({ fname: "", description: "", categoryId: "", image: "", price: "" });
   };
 
   const handleFoodImageFile = (event) => {
@@ -794,11 +798,18 @@ export default function AdminPage() {
       return;
     }
 
+    const parsedPrice = Number(foodForm.price);
+    if (foodForm.price !== "" && (Number.isNaN(parsedPrice) || parsedPrice < 0)) {
+      setActionStatus({ type: "error", message: "Price must be a valid number (0 or greater)." });
+      return;
+    }
+
     const payload = {
       fname: foodForm.fname.trim(),
       description: foodForm.description.trim(),
       categoryId: foodForm.categoryId,
       image: foodForm.image.trim(),
+      price: foodForm.price === "" ? 0 : parsedPrice,
     };
 
     try {
@@ -881,6 +892,7 @@ export default function AdminPage() {
       description: "",
       categoryId: selectedAdminCategory?._id || "",
       image: "",
+      price: "",
     });
     setFoodModal({ open: true, mode: "add", foodId: null, menuId: null });
   };
@@ -1119,7 +1131,7 @@ export default function AdminPage() {
       { id: "overview", label: "Overview", icon: "▦" },
       { id: "foods", label: "Foods", icon: "🍽" },
       { id: "categories", label: "Category", icon: "◼" },
-      { id: "orders", label: "Orders", icon: "$" },
+      { id: "orders", label: "Orders", icon: "📦" },
       { id: "users", label: "Users", icon: "👤" },
     ],
     []
@@ -1281,9 +1293,9 @@ export default function AdminPage() {
                 />
                 <MetricCard
                   label="Total Revenue"
-                  value={`$${Number(totalRevenue).toFixed(2)}`}
+                  value={formatPrice(totalRevenue) || "৳0"}
                   iconBg={isDark ? "bg-emerald-600/20 text-emerald-300" : "bg-emerald-100 text-emerald-700"}
-                  icon={<span className="text-sm">$</span>}
+                  icon={<span className="text-sm">৳</span>}
                 />
               </div>
 
@@ -1333,6 +1345,7 @@ export default function AdminPage() {
                       <th className="py-3 pr-4 font-semibold">Name</th>
                       <th className="py-3 pr-4 font-semibold">Description</th>
                       <th className="py-3 pr-4 font-semibold">Category</th>
+                      <th className="py-3 pr-4 font-semibold">Price</th>
                       <th className="py-3 pr-2 text-right font-semibold">Action</th>
                     </tr>
                   </thead>
@@ -1353,6 +1366,9 @@ export default function AdminPage() {
                           {food.description || "—"}
                         </td>
                         <td className="py-3 pr-4 align-top">{food.categoryName || "—"}</td>
+                        <td className="py-3 pr-4 align-top font-medium text-[var(--a-heading)]">
+                          {formatPrice(food.price) || "—"}
+                        </td>
                         <td className="py-3 pr-2 align-top text-right">
                           <FoodActionMenu
                             onEdit={() => openEditFoodModal(food)}
@@ -1364,7 +1380,7 @@ export default function AdminPage() {
                     ))}
                     {filteredFoodRows.length === 0 && (
                       <tr>
-                        <td className="py-6 text-center text-[var(--a-muted)]" colSpan={4}>
+                        <td className="py-6 text-center text-[var(--a-muted)]" colSpan={5}>
                           {foodsSearch.trim() ? "No foods match your search." : "No foods found."}
                         </td>
                       </tr>
@@ -1446,6 +1462,7 @@ export default function AdminPage() {
                         <tr className={tableHeadClass}>
                           <th className="py-3 pr-4 font-semibold">Name</th>
                           <th className="py-3 pr-4 font-semibold">Description</th>
+                          <th className="py-3 pr-4 font-semibold">Price</th>
                           <th className="py-3 pr-2 text-right font-semibold">Action</th>
                         </tr>
                       </thead>
@@ -1465,6 +1482,9 @@ export default function AdminPage() {
                             <td className="max-w-md py-3 pr-4 align-top text-xs leading-5 text-[var(--a-muted)]">
                               {food.description || "—"}
                             </td>
+                            <td className="py-3 pr-4 align-top font-medium text-[var(--a-heading)]">
+                              {formatPrice(food.price) || "—"}
+                            </td>
                             <td className="py-3 pr-2 align-top text-right">
                               <FoodActionMenu
                                 onEdit={() => openEditFoodModal(food)}
@@ -1476,7 +1496,7 @@ export default function AdminPage() {
                         ))}
                         {categoryFoodRows.length === 0 && (
                           <tr>
-                            <td className="py-6 text-center text-[var(--a-muted)]" colSpan={3}>
+                            <td className="py-6 text-center text-[var(--a-muted)]" colSpan={4}>
                               No foods in this category yet.
                             </td>
                           </tr>
@@ -2074,6 +2094,18 @@ export default function AdminPage() {
                   onChange={(event) => setFoodForm((prev) => ({ ...prev, description: event.target.value }))}
                   className="min-h-[90px] w-full rounded-lg border border-[color:var(--a-border)] bg-[var(--a-inset)] px-3 py-2 text-sm text-[var(--a-heading)] outline-none focus:border-[#ee6e73] dark:focus:border-[#f0a8ad]"
                   placeholder="Short description"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[var(--a-muted)]">Price (BDT)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={foodForm.price}
+                  onChange={(event) => setFoodForm((prev) => ({ ...prev, price: event.target.value }))}
+                  className="w-full rounded-lg border border-[color:var(--a-border)] bg-[var(--a-inset)] px-3 py-2 text-sm text-[var(--a-heading)] outline-none focus:border-[#ee6e73] dark:focus:border-[#f0a8ad]"
+                  placeholder="e.g. 250"
                 />
               </div>
               <div>
