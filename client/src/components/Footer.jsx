@@ -10,10 +10,46 @@ export default function Footer() {
         <div className="md:pl-16 lg:pl-56">
           <h3 className="mb-2 text-xl font-semibold text-white dark:text-zinc-100">Social Media</h3>
           <ul className="space-y-1 text-white/90 dark:text-zinc-400">
-            <li>Facebook</li>
-            <li>Instagram</li>
-            <li>Twitter</li>
-            <li>Whatsapp</li>
+            <li>
+              <a
+                href="https://www.facebook.com/mdabutalha.rumman"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="transition hover:text-white dark:hover:text-zinc-200"
+              >
+                Facebook
+              </a>
+            </li>
+            <li>
+              <a
+                href="https://www.instagram.com/rummanmdabutalha/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="transition hover:text-white dark:hover:text-zinc-200"
+              >
+                Instagram
+              </a>
+            </li>
+            <li>
+              <a
+                href="https://x.com/MdAbuTalhaRumm1"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="transition hover:text-white dark:hover:text-zinc-200"
+              >
+                Twitter
+              </a>
+            </li>
+            <li>
+              <a
+                href="https://wa.me/qr/POWXG6EYKO7WO1"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="transition hover:text-white dark:hover:text-zinc-200"
+              >
+                Whatsapp
+              </a>
+            </li>
           </ul>
         </div>
       </div>
