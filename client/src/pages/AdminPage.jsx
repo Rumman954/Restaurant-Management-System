@@ -5,6 +5,33 @@ import { formatPrice } from "../lib/formatPrice";
 import { useTheme } from "../context/ThemeContext";
 import { MENU_FOODS, categoryImageFor, categoryLabel } from "../data/menuCatalog";
 
+const ORDER_STATUS_OPTIONS = [
+  { value: "pending", label: "Confirm" },
+  { value: "progress", label: "Pending" },
+  { value: "delivered", label: "Delivered" },
+];
+
+function orderStatusLabel(status) {
+  return ORDER_STATUS_OPTIONS.find((option) => option.value === status)?.label || status;
+}
+
+function OrderStatusSelect({ value, onChange, disabled = false }) {
+  return (
+    <select
+      value={value}
+      disabled={disabled}
+      onChange={(event) => onChange(event.target.value)}
+      className="rounded-lg border border-[color:var(--a-border)] bg-[var(--a-bg)] px-2 py-1.5 text-xs font-medium text-[var(--a-heading)] outline-none focus:ring-2 focus:ring-[#ee6e73]/30 dark:focus:ring-[#421F37]/40"
+    >
+      {ORDER_STATUS_OPTIONS.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  );
+}
+
 function MetricCard({ label, value, iconBg, icon }) {
   return (
     <div className="rounded-2xl border border-[color:var(--a-border)] bg-[var(--a-card)] p-5 shadow-lg">
@@ -329,8 +356,8 @@ function UserActionMenu({ user, onView, onMakeEmployee, onMakeAdmin, onRemoveEmp
 function OverviewBarChart({ orders, pending, progress, delivered, isDark }) {
   const bars = [
     { label: "Orders", value: orders },
-    { label: "Pending", value: pending },
-    { label: "Progress", value: progress },
+    { label: "Awaiting Confirm", value: pending },
+    { label: "Pending", value: progress },
     { label: "Delivered", value: delivered },
   ];
 
@@ -715,7 +742,7 @@ export default function AdminPage() {
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setActionStatus({ type: "success", message: res?.data?.msg || "Order moved to progress." });
+      setActionStatus({ type: "success", message: res?.data?.msg || "Order confirmed and moved to pending." });
       await loadOverview();
     } catch (e) {
       setActionStatus({ type: "error", message: e?.response?.data?.msg || "Could not update order status." });
@@ -729,10 +756,40 @@ export default function AdminPage() {
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setActionStatus({ type: "success", message: res?.data?.msg || "Order moved to delivered." });
+      setActionStatus({ type: "success", message: res?.data?.msg || "Order marked as delivered." });
       await loadOverview();
     } catch (e) {
       setActionStatus({ type: "error", message: e?.response?.data?.msg || "Could not move order to delivered." });
+    }
+  };
+
+  const handleDeleteOrder = async (order) => {
+    if (!window.confirm(`Delete order "${order.orderId}"?`)) return;
+    try {
+      const res = await api.delete(`/admin/orders/${order._id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setActionStatus({ type: "success", message: res?.data?.msg || "Order deleted." });
+      await loadOverview();
+    } catch (e) {
+      setActionStatus({ type: "error", message: e?.response?.data?.msg || "Could not delete order." });
+    }
+  };
+
+  const handleUpdateOrderStatus = async (orderMongoId, status) => {
+    try {
+      const res = await api.put(
+        `/admin/orders/${orderMongoId}/status`,
+        { status },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setActionStatus({
+        type: "success",
+        message: res?.data?.msg || `Order status changed to ${orderStatusLabel(status)}.`,
+      });
+      await loadOverview();
+    } catch (e) {
+      setActionStatus({ type: "error", message: e?.response?.data?.msg || "Could not update order status." });
     }
   };
 
@@ -1286,7 +1343,7 @@ export default function AdminPage() {
                   icon={<span className="text-sm">🧾</span>}
                 />
                 <MetricCard
-                  label="Pending Orders"
+                  label="Awaiting Confirm"
                   value={pendingOrders.length}
                   iconBg={isDark ? "bg-amber-600/20 text-amber-300" : "bg-amber-100 text-amber-700"}
                   icon={<span className="text-sm">⏳</span>}
@@ -1665,7 +1722,8 @@ export default function AdminPage() {
           ) : activeSection === "orders" ? (
             <section className={`space-y-6 ${panelClass}`}>
               <div>
-                <h2 className="text-2xl font-semibold text-[var(--a-heading)]">Pending Orders</h2>
+                <h2 className="text-2xl font-semibold text-[var(--a-heading)]">Awaiting Confirm</h2>
+                <p className="mt-1 text-sm text-[var(--a-muted)]">New orders — click Confirm to move them to Pending.</p>
                 <div className="mt-3 overflow-x-auto">
                   <table className="min-w-full text-left text-sm">
                     <thead>
@@ -1673,6 +1731,7 @@ export default function AdminPage() {
                         <th className="py-2 pr-4">Order ID</th>
                         <th className="py-2 pr-4">Food</th>
                         <th className="py-2 pr-4">Customer</th>
+                        <th className="py-2 pr-4">Status</th>
                         <th className="py-2 pr-4">Action</th>
                       </tr>
                     </thead>
@@ -1683,20 +1742,35 @@ export default function AdminPage() {
                           <td className="py-2 pr-4">{order.foodName}</td>
                           <td className="py-2 pr-4">{order.userId?.name || "-"}</td>
                           <td className="py-2 pr-4">
-                            <button
-                              type="button"
-                              className="rounded bg-emerald-600 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-700"
-                              onClick={() => handleConfirmOrder(order._id)}
-                            >
-                              Confirm
-                            </button>
+                            <OrderStatusSelect
+                              value={order.status}
+                              onChange={(status) => handleUpdateOrderStatus(order._id, status)}
+                            />
+                          </td>
+                          <td className="py-2 pr-4">
+                            <div className="flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                className="rounded bg-emerald-600 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-700"
+                                onClick={() => handleConfirmOrder(order._id)}
+                              >
+                                Confirm
+                              </button>
+                              <button
+                                type="button"
+                                className="rounded bg-rose-600 px-3 py-1 text-xs font-semibold text-white hover:bg-rose-700"
+                                onClick={() => handleDeleteOrder(order)}
+                              >
+                                Delete
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
                       {pendingOrders.length === 0 && (
                         <tr>
-                          <td className="py-3 text-[var(--a-muted)]" colSpan={4}>
-                            No pending orders.
+                          <td className="py-3 text-[var(--a-muted)]" colSpan={5}>
+                            No orders awaiting confirm.
                           </td>
                         </tr>
                       )}
@@ -1706,7 +1780,8 @@ export default function AdminPage() {
               </div>
 
               <div>
-                <h2 className="text-xl font-semibold text-[var(--a-heading)]">In Progress</h2>
+                <h2 className="text-xl font-semibold text-[var(--a-heading)]">Pending</h2>
+                <p className="mt-1 text-sm text-[var(--a-muted)]">Confirmed orders — mark as Delivered when complete.</p>
                 <div className="mt-3 overflow-x-auto">
                   <table className="min-w-full text-left text-sm">
                     <thead>
@@ -1714,6 +1789,7 @@ export default function AdminPage() {
                         <th className="py-2 pr-4">Order ID</th>
                         <th className="py-2 pr-4">Food</th>
                         <th className="py-2 pr-4">Customer</th>
+                        <th className="py-2 pr-4">Status</th>
                         <th className="py-2 pr-4">Action</th>
                       </tr>
                     </thead>
@@ -1723,6 +1799,12 @@ export default function AdminPage() {
                           <td className="py-2 pr-4">{order.orderId}</td>
                           <td className="py-2 pr-4">{order.foodName}</td>
                           <td className="py-2 pr-4">{order.userId?.name || "-"}</td>
+                          <td className="py-2 pr-4">
+                            <OrderStatusSelect
+                              value={order.status}
+                              onChange={(status) => handleUpdateOrderStatus(order._id, status)}
+                            />
+                          </td>
                           <td className="py-2 pr-4">
                             <button
                               type="button"
@@ -1736,8 +1818,8 @@ export default function AdminPage() {
                       ))}
                       {progressOrders.length === 0 && (
                         <tr>
-                          <td className="py-3 text-[var(--a-muted)]" colSpan={4}>
-                            No in-progress orders.
+                          <td className="py-3 text-[var(--a-muted)]" colSpan={5}>
+                            No pending orders.
                           </td>
                         </tr>
                       )}
@@ -1755,6 +1837,7 @@ export default function AdminPage() {
                         <th className="py-2 pr-4">Order ID</th>
                         <th className="py-2 pr-4">Food</th>
                         <th className="py-2 pr-4">Customer</th>
+                        <th className="py-2 pr-4">Status</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1763,11 +1846,17 @@ export default function AdminPage() {
                           <td className="py-2 pr-4">{order.orderId}</td>
                           <td className="py-2 pr-4">{order.foodName}</td>
                           <td className="py-2 pr-4">{order.userId?.name || "-"}</td>
+                          <td className="py-2 pr-4">
+                            <OrderStatusSelect
+                              value={order.status}
+                              onChange={(status) => handleUpdateOrderStatus(order._id, status)}
+                            />
+                          </td>
                         </tr>
                       ))}
                       {deliveredOrders.length === 0 && (
                         <tr>
-                          <td className="py-3 text-[var(--a-muted)]" colSpan={3}>
+                          <td className="py-3 text-[var(--a-muted)]" colSpan={4}>
                             No delivered orders yet.
                           </td>
                         </tr>

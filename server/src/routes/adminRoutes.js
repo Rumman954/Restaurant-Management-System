@@ -26,7 +26,8 @@ router.get("/admin/overview", requireAuth, requireAdmin, async (_req, res) => {
 
     const totalRevenue = orders.reduce((sum, order) => {
       if (order.status !== "delivered") return sum;
-      return sum + (Number(order.price) > 0 ? Number(order.price) : 250);
+      const amount = Number(order.total) > 0 ? Number(order.total) : Number(order.price);
+      return sum + (amount > 0 ? amount : 250);
     }, 0);
 
     res.json({
@@ -292,7 +293,7 @@ router.put("/admin/orders/:orderId/confirm", requireAuth, requireAdmin, async (r
     const { orderId } = req.params;
     const updated = await Order.findByIdAndUpdate(orderId, { status: "progress" }, { new: true }).populate("userId", "name email");
     if (!updated) return res.status(404).json({ code: "0", msg: "Order not found." });
-    res.json({ code: "1", msg: "Order moved to progress.", order: updated });
+    res.json({ code: "1", msg: "Order confirmed and moved to pending.", order: updated });
   } catch (error) {
     res.status(500).json({ code: "0", msg: error.message });
   }
@@ -303,13 +304,41 @@ router.put("/admin/orders/:orderId/deliver", requireAuth, requireAdmin, async (r
     const { orderId } = req.params;
     const order = await Order.findById(orderId);
     if (!order) return res.status(404).json({ code: "0", msg: "Order not found." });
-    if (order.status !== "progress") return res.status(400).json({ code: "0", msg: "Only progress orders can be delivered." });
 
     order.status = "delivered";
     await order.save();
     await order.populate("userId", "name email");
 
-    res.json({ code: "1", msg: "Order moved to delivered.", order });
+    res.json({ code: "1", msg: "Order marked as delivered.", order });
+  } catch (error) {
+    res.status(500).json({ code: "0", msg: error.message });
+  }
+});
+
+router.put("/admin/orders/:orderId/status", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { status } = req.body;
+    const allowed = ["pending", "progress", "delivered"];
+    if (!allowed.includes(status)) {
+      return res.status(400).json({ code: "0", msg: "Invalid order status." });
+    }
+
+    const updated = await Order.findByIdAndUpdate(orderId, { status }, { new: true }).populate("userId", "name email");
+    if (!updated) return res.status(404).json({ code: "0", msg: "Order not found." });
+
+    res.json({ code: "1", msg: "Order status updated.", order: updated });
+  } catch (error) {
+    res.status(500).json({ code: "0", msg: error.message });
+  }
+});
+
+router.delete("/admin/orders/:orderId", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const deleted = await Order.findByIdAndDelete(orderId);
+    if (!deleted) return res.status(404).json({ code: "0", msg: "Order not found." });
+    res.json({ code: "1", msg: "Order deleted." });
   } catch (error) {
     res.status(500).json({ code: "0", msg: error.message });
   }

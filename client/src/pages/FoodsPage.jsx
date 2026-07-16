@@ -3,15 +3,17 @@ import { useSearchParams } from "react-router-dom";
 import { api } from "../lib/api";
 import { formatPrice } from "../lib/formatPrice";
 import { MENU_FOODS, mergeMenuCategories } from "../data/menuCatalog";
+import { useCart } from "../context/CartContext";
+import CartFab from "../components/CartFab";
 
 const FOODS_BATCH = 9;
 
 export default function FoodsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [expandedFood, setExpandedFood] = useState(null);
-  const [orderNotice, setOrderNotice] = useState("");
-  const [showLoginWarning, setShowLoginWarning] = useState(false);
+  const [cartNotice, setCartNotice] = useState("");
   const [apiCategories, setApiCategories] = useState([]);
+  const { addItem } = useCart();
   const [apiFoods, setApiFoods] = useState([]);
   const [visibleCount, setVisibleCount] = useState(FOODS_BATCH);
   const [showLoadMore, setShowLoadMore] = useState(false);
@@ -171,17 +173,12 @@ export default function FoodsPage() {
     setSearchParams(next);
   };
 
-  const handleLoginWarningOk = () => {
-    setShowLoginWarning(false);
-    window.dispatchEvent(new Event("open-login-modal"));
-  };
-
   return (
     <main>
       <section className="mx-auto max-w-6xl px-4 py-10 sm:py-12">
-        {orderNotice && (
+        {cartNotice && (
           <p className="mb-8 rounded border border-zinc-700 bg-[#ee6e73] px-4 py-3 text-center text-sm font-semibold text-white dark:border-[#5a2a4a] dark:bg-[#421F37]">
-            {orderNotice}
+            {cartNotice}
           </p>
         )}
         <h2 className="mb-8 text-center text-4xl font-medium text-zinc-800 dark:text-zinc-300 sm:text-5xl">Foods Area!</h2>
@@ -254,33 +251,13 @@ export default function FoodsPage() {
                       <button
                         type="button"
                         className="brand-btn mt-4 w-full shrink-0 rounded-sm px-4 py-2 text-[11px] font-semibold uppercase tracking-wide transition"
-                        onClick={async () => {
-                          const orderName = food.fname || "Food order";
-                          const authToken = sessionStorage.getItem("authToken");
-                          const authUser = sessionStorage.getItem("authUser");
-                          if (!authToken || !authUser) {
-                            setShowLoginWarning(true);
-                            return;
-                          }
-
-                          try {
-                            const res = await api.post(
-                              "/orders",
-                              {
-                                foodName: orderName,
-                                price: Number(food.price) > 0 ? Number(food.price) : undefined,
-                              },
-                              { headers: { Authorization: `Bearer ${authToken}` } }
-                            );
-                            const placedOrderId = res?.data?.order?.orderId;
-                            setOrderNotice(`Order Placed! Your Order ID is : ${placedOrderId}`);
-                          } catch (error) {
-                            const message = error?.response?.data?.msg || "Order failed. Please try again.";
-                            setOrderNotice(message);
-                          }
+                        onClick={() => {
+                          addItem(food);
+                          setCartNotice(`"${food.fname}" added to cart!`);
+                          window.setTimeout(() => setCartNotice(""), 2500);
                         }}
                       >
-                        Order Now!
+                        Add to Cart
                       </button>
                     </div>
                   </article>
@@ -326,22 +303,7 @@ export default function FoodsPage() {
         )}
       </section>
 
-      {showLoginWarning && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4">
-          <div className="w-full max-w-md rounded bg-white dark:bg-zinc-900 p-6 shadow-xl">
-            <p className="text-center text-base text-zinc-800 dark:text-zinc-300">For place order please login your account</p>
-            <div className="mt-6 flex justify-center">
-              <button
-                type="button"
-                className="brand-btn rounded-sm px-5 py-2 text-sm font-semibold uppercase tracking-wide transition"
-                onClick={handleLoginWarningOk}
-              >
-                Ok
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <CartFab />
     </main>
   );
 }

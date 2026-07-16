@@ -5,6 +5,7 @@ import HomePage from "./pages/HomePage";
 import AboutPage from "./pages/AboutPage";
 import CategoriesPage from "./pages/CategoriesPage";
 import FoodsPage from "./pages/FoodsPage";
+import CartPage from "./pages/CartPage";
 import AdminPage from "./pages/AdminPage";
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
           <Route path="/about" element={<AboutPage />} />
           <Route path="/food-categories" element={<CategoriesPage />} />
           <Route path="/foods" element={<FoodsPage />} />
+          <Route path="/cart" element={<CartPage />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/Foods" element={<Navigate to="/foods" replace />} />
           <Route path="/Food-categories" element={<Navigate to="/food-categories" replace />} />

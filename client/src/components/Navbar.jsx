@@ -1096,7 +1096,11 @@ export default function Navbar() {
                                 : "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:text-zinc-300"
                           }`}
                         >
-                          {order.status === "delivered" ? "Delivered" : order.status === "progress" ? "Confirmed" : "Pending"}
+                          {order.status === "delivered"
+                            ? "Delivered"
+                            : order.status === "progress"
+                              ? "Pending"
+                              : "Confirm"}
                         </span>
                       </div>
                     </div>
