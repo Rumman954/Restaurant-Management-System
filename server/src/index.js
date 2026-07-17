@@ -1,4 +1,4 @@
-require("dotenv").config();
+require("dotenv").config({ path: require("path").join(__dirname, "../.env") });
 const express = require("express");
 const cors = require("cors");
 const connectDb = require("./config/db");
@@ -24,7 +24,10 @@ const port = process.env.PORT || 5000;
 connectDb()
   .then(async () => {
     await ensureDefaultCategories();
-    app.listen(port, () => console.log(`Server on ${port}`));
+    app.listen(port, () => {
+      console.log(`Server on ${port}`);
+      console.log(`Stripe: ${process.env.STRIPE_SECRET_KEY ? "configured" : "NOT configured"}`);
+    });
   })
   .catch((e) => {
     console.error(e.message);

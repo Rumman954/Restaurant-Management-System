@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Build
+dist/
+dist-ssr/
+build/
+
+# Environment secrets (keep *.env.example tracked)
+.env
+.env.local
+.env.*.local
+**/.env
+!**/.env.example
+
+# Logs / editor
+logs/
+*.log
+.vscode/
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

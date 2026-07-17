@@ -32,8 +32,12 @@ function summarizeFoodName(items) {
 }
 
 let stripe = null;
-if (process.env.STRIPE_SECRET_KEY) {
-  stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+function getStripe() {
+  if (stripe) return stripe;
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key || !String(key).trim()) return null;
+  stripe = require("stripe")(String(key).trim());
+  return stripe;
 }
 
 router.post("/orders", requireAuth, async (req, res) => {
@@ -85,13 +89,14 @@ router.post("/orders/checkout", requireAuth, async (req, res) => {
     }
 
     if (method === "online") {
-      if (!stripe) {
+      const stripeClient = getStripe();
+      if (!stripeClient) {
         return res.status(503).json({ code: "0", msg: "Online payment is not configured. Add STRIPE_SECRET_KEY to server .env." });
       }
       if (!stripePaymentIntentId) {
         return res.status(400).json({ code: "0", msg: "Payment confirmation is required for online payment." });
       }
-      const intent = await stripe.paymentIntents.retrieve(stripePaymentIntentId);
+      const intent = await stripeClient.paymentIntents.retrieve(stripePaymentIntentId);
       if (intent.status !== "succeeded") {
         return res.status(400).json({ code: "0", msg: "Payment was not completed. Please try again." });
       }
@@ -126,7 +131,8 @@ router.post("/orders/checkout", requireAuth, async (req, res) => {
 
 router.post("/orders/create-payment-intent", requireAuth, async (req, res) => {
   try {
-    if (!stripe) {
+    const stripeClient = getStripe();
+    if (!stripeClient) {
       return res.status(503).json({ code: "0", msg: "Stripe is not configured on the server." });
     }
 
@@ -145,7 +151,7 @@ router.post("/orders/create-payment-intent", requireAuth, async (req, res) => {
       return res.status(400).json({ code: "0", msg: "Online payment is only available for home delivery." });
     }
 
-    const paymentIntent = await stripe.paymentIntents.create({
+    const paymentIntent = await stripeClient.paymentIntents.create({
       amount: Math.round(totals.total * 100),
       currency: "bdt",
       automatic_payment_methods: { enabled: true },

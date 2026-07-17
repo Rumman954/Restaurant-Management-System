@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
-import { formatPrice } from "../lib/formatPrice";
+import { formatPrice, formatAmount } from "../lib/formatPrice";
 import { useTheme } from "../context/ThemeContext";
 import { MENU_FOODS, categoryImageFor, categoryLabel } from "../data/menuCatalog";
 
@@ -13,6 +13,36 @@ const ORDER_STATUS_OPTIONS = [
 
 function orderStatusLabel(status) {
   return ORDER_STATUS_OPTIONS.find((option) => option.value === status)?.label || status;
+}
+
+function orderAmount(order) {
+  const total = Number(order?.total);
+  if (Number.isFinite(total) && total > 0) return total;
+  const price = Number(order?.price);
+  return Number.isFinite(price) && price > 0 ? price : 0;
+}
+
+function paymentMethodLabel(method) {
+  if (method === "online") return "Online";
+  if (method === "cod") return "Cash on Delivery";
+  if (method === "pickup") return "Pickup";
+  return method || "—";
+}
+
+function paymentStatusBadge(order) {
+  const paid = order.paymentStatus === "paid" || order.paymentMethod === "online";
+  if (paid) {
+    return (
+      <span className="rounded bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold uppercase text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+        Paid
+      </span>
+    );
+  }
+  return (
+    <span className="rounded bg-amber-100 px-2 py-0.5 text-[11px] font-semibold uppercase text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+      Unpaid
+    </span>
+  );
 }
 
 function OrderStatusSelect({ value, onChange, disabled = false }) {
@@ -356,7 +386,7 @@ function UserActionMenu({ user, onView, onMakeEmployee, onMakeAdmin, onRemoveEmp
 function OverviewBarChart({ orders, pending, progress, delivered, isDark }) {
   const bars = [
     { label: "Orders", value: orders },
-    { label: "Awaiting Confirm", value: pending },
+    { label: "New Orders", value: pending },
     { label: "Pending", value: progress },
     { label: "Delivered", value: delivered },
   ];
@@ -1343,7 +1373,7 @@ export default function AdminPage() {
                   icon={<span className="text-sm">🧾</span>}
                 />
                 <MetricCard
-                  label="Awaiting Confirm"
+                  label="New Orders"
                   value={pendingOrders.length}
                   iconBg={isDark ? "bg-amber-600/20 text-amber-300" : "bg-amber-100 text-amber-700"}
                   icon={<span className="text-sm">⏳</span>}
@@ -1721,9 +1751,30 @@ export default function AdminPage() {
             </section>
           ) : activeSection === "orders" ? (
             <section className={`space-y-6 ${panelClass}`}>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-2xl font-semibold text-[var(--a-heading)]">Orders</h2>
+                  <p className="mt-1 text-sm text-[var(--a-muted)]">
+                    New paid/online orders appear under <span className="font-semibold">New Orders</span>. Click Confirm to move them to Pending.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={loadOverview}
+                  className="rounded-lg border border-[color:var(--a-border)] px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--a-heading)] transition hover:bg-[var(--a-soft)]"
+                >
+                  Refresh
+                </button>
+              </div>
+
               <div>
-                <h2 className="text-2xl font-semibold text-[var(--a-heading)]">Awaiting Confirm</h2>
-                <p className="mt-1 text-sm text-[var(--a-muted)]">New orders — click Confirm to move them to Pending.</p>
+                <h2 className="text-xl font-semibold text-[var(--a-heading)]">
+                  New Orders{" "}
+                  <span className="text-base font-medium text-[var(--a-muted)]">({pendingOrders.length})</span>
+                </h2>
+                <p className="mt-1 text-sm text-[var(--a-muted)]">
+                  Includes Cash on Delivery and Online paid orders waiting for admin confirm.
+                </p>
                 <div className="mt-3 overflow-x-auto">
                   <table className="min-w-full text-left text-sm">
                     <thead>
@@ -1731,6 +1782,8 @@ export default function AdminPage() {
                         <th className="py-2 pr-4">Order ID</th>
                         <th className="py-2 pr-4">Food</th>
                         <th className="py-2 pr-4">Customer</th>
+                        <th className="py-2 pr-4">Total</th>
+                        <th className="py-2 pr-4">Payment</th>
                         <th className="py-2 pr-4">Status</th>
                         <th className="py-2 pr-4">Action</th>
                       </tr>
@@ -1738,9 +1791,21 @@ export default function AdminPage() {
                     <tbody>
                       {pendingOrders.map((order) => (
                         <tr key={order._id} className={tableRowClass}>
-                          <td className="py-2 pr-4">{order.orderId}</td>
-                          <td className="py-2 pr-4">{order.foodName}</td>
+                          <td className="py-2 pr-4 font-medium">{order.orderId}</td>
+                          <td className="max-w-xs py-2 pr-4">
+                            <p>{order.foodName}</p>
+                            {order.deliveryType === "delivery" && (
+                              <p className="mt-0.5 text-[11px] text-[var(--a-muted)]">Home delivery</p>
+                            )}
+                          </td>
                           <td className="py-2 pr-4">{order.userId?.name || "-"}</td>
+                          <td className="py-2 pr-4 font-semibold text-[var(--a-heading)]">{formatAmount(orderAmount(order))}</td>
+                          <td className="py-2 pr-4">
+                            <div className="flex flex-col items-start gap-1">
+                              <span>{paymentMethodLabel(order.paymentMethod)}</span>
+                              {paymentStatusBadge(order)}
+                            </div>
+                          </td>
                           <td className="py-2 pr-4">
                             <OrderStatusSelect
                               value={order.status}
@@ -1769,8 +1834,8 @@ export default function AdminPage() {
                       ))}
                       {pendingOrders.length === 0 && (
                         <tr>
-                          <td className="py-3 text-[var(--a-muted)]" colSpan={5}>
-                            No orders awaiting confirm.
+                          <td className="py-3 text-[var(--a-muted)]" colSpan={7}>
+                            No new orders.
                           </td>
                         </tr>
                       )}
@@ -1780,7 +1845,10 @@ export default function AdminPage() {
               </div>
 
               <div>
-                <h2 className="text-xl font-semibold text-[var(--a-heading)]">Pending</h2>
+                <h2 className="text-xl font-semibold text-[var(--a-heading)]">
+                  Pending{" "}
+                  <span className="text-base font-medium text-[var(--a-muted)]">({progressOrders.length})</span>
+                </h2>
                 <p className="mt-1 text-sm text-[var(--a-muted)]">Confirmed orders — mark as Delivered when complete.</p>
                 <div className="mt-3 overflow-x-auto">
                   <table className="min-w-full text-left text-sm">
@@ -1789,6 +1857,8 @@ export default function AdminPage() {
                         <th className="py-2 pr-4">Order ID</th>
                         <th className="py-2 pr-4">Food</th>
                         <th className="py-2 pr-4">Customer</th>
+                        <th className="py-2 pr-4">Total</th>
+                        <th className="py-2 pr-4">Payment</th>
                         <th className="py-2 pr-4">Status</th>
                         <th className="py-2 pr-4">Action</th>
                       </tr>
@@ -1796,9 +1866,16 @@ export default function AdminPage() {
                     <tbody>
                       {progressOrders.map((order) => (
                         <tr key={order._id} className={tableRowClass}>
-                          <td className="py-2 pr-4">{order.orderId}</td>
-                          <td className="py-2 pr-4">{order.foodName}</td>
+                          <td className="py-2 pr-4 font-medium">{order.orderId}</td>
+                          <td className="max-w-xs py-2 pr-4">{order.foodName}</td>
                           <td className="py-2 pr-4">{order.userId?.name || "-"}</td>
+                          <td className="py-2 pr-4 font-semibold text-[var(--a-heading)]">{formatAmount(orderAmount(order))}</td>
+                          <td className="py-2 pr-4">
+                            <div className="flex flex-col items-start gap-1">
+                              <span>{paymentMethodLabel(order.paymentMethod)}</span>
+                              {paymentStatusBadge(order)}
+                            </div>
+                          </td>
                           <td className="py-2 pr-4">
                             <OrderStatusSelect
                               value={order.status}
@@ -1818,7 +1895,7 @@ export default function AdminPage() {
                       ))}
                       {progressOrders.length === 0 && (
                         <tr>
-                          <td className="py-3 text-[var(--a-muted)]" colSpan={5}>
+                          <td className="py-3 text-[var(--a-muted)]" colSpan={7}>
                             No pending orders.
                           </td>
                         </tr>
@@ -1829,7 +1906,10 @@ export default function AdminPage() {
               </div>
 
               <div>
-                <h2 className="text-xl font-semibold text-[var(--a-heading)]">Delivered</h2>
+                <h2 className="text-xl font-semibold text-[var(--a-heading)]">
+                  Delivered{" "}
+                  <span className="text-base font-medium text-[var(--a-muted)]">({deliveredOrders.length})</span>
+                </h2>
                 <div className="mt-3 overflow-x-auto">
                   <table className="min-w-full text-left text-sm">
                     <thead>
@@ -1837,15 +1917,24 @@ export default function AdminPage() {
                         <th className="py-2 pr-4">Order ID</th>
                         <th className="py-2 pr-4">Food</th>
                         <th className="py-2 pr-4">Customer</th>
+                        <th className="py-2 pr-4">Total</th>
+                        <th className="py-2 pr-4">Payment</th>
                         <th className="py-2 pr-4">Status</th>
                       </tr>
                     </thead>
                     <tbody>
                       {deliveredOrders.map((order) => (
                         <tr key={order._id} className={tableRowClass}>
-                          <td className="py-2 pr-4">{order.orderId}</td>
-                          <td className="py-2 pr-4">{order.foodName}</td>
+                          <td className="py-2 pr-4 font-medium">{order.orderId}</td>
+                          <td className="max-w-xs py-2 pr-4">{order.foodName}</td>
                           <td className="py-2 pr-4">{order.userId?.name || "-"}</td>
+                          <td className="py-2 pr-4 font-semibold text-[var(--a-heading)]">{formatAmount(orderAmount(order))}</td>
+                          <td className="py-2 pr-4">
+                            <div className="flex flex-col items-start gap-1">
+                              <span>{paymentMethodLabel(order.paymentMethod)}</span>
+                              {paymentStatusBadge(order)}
+                            </div>
+                          </td>
                           <td className="py-2 pr-4">
                             <OrderStatusSelect
                               value={order.status}
@@ -1856,7 +1945,7 @@ export default function AdminPage() {
                       ))}
                       {deliveredOrders.length === 0 && (
                         <tr>
-                          <td className="py-3 text-[var(--a-muted)]" colSpan={4}>
+                          <td className="py-3 text-[var(--a-muted)]" colSpan={6}>
                             No delivered orders yet.
                           </td>
                         </tr>
