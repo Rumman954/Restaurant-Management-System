@@ -1,9 +1,34 @@
 export const MENU_CATEGORIES = [
-  { _id: "italian", name: "Italian" },
-  { _id: "chinese", name: "Chinese" },
-  { _id: "snacks", name: "Snacks" },
-  { _id: "bangladeshi", name: "Bangladeshi" },
-  { _id: "thai", name: "Thai" },
+  {
+    _id: "italian",
+    name: "Italian",
+    shortDesc: "Pasta, pizza, and classic Italian comfort food",
+    longDesc: "Enjoy Italian favourites like pasta, pizza, risotto, and desserts — perfect for a hearty meal.",
+  },
+  {
+    _id: "chinese",
+    name: "Chinese",
+    shortDesc: "Noodles, dumplings, and wok-style dishes",
+    longDesc: "From noodles and dumplings to stir-fried specials, explore bold Chinese flavours made to order.",
+  },
+  {
+    _id: "snacks",
+    name: "Snacks",
+    shortDesc: "Quick bites, drinks, and evening treats",
+    longDesc: "Light snacks, tea, coffee, fries, rolls, and street-style bites for any time of day.",
+  },
+  {
+    _id: "bangladeshi",
+    name: "Bangladeshi",
+    shortDesc: "Home-style Bengali meals and classics",
+    longDesc: "Traditional Bangladeshi dishes — biryani, bhuna, bhorta, fish curry, and sweets prepared with care.",
+  },
+  {
+    _id: "thai",
+    name: "Thai",
+    shortDesc: "Curries, noodles, and Thai street food",
+    longDesc: "Taste Thai classics like Pad Thai, green curry, Tom Yum, and fresh salads with aromatic spices.",
+  },
 ];
 
 const CATEGORY_IMAGE_FALLBACKS = {
@@ -25,6 +50,7 @@ export function categoryImageFor(name, image = "") {
 /** Merge DB categories with static menu categories so new admin categories appear publicly. */
 export function mergeMenuCategories(apiCategories = []) {
   const slugByName = Object.fromEntries(MENU_CATEGORIES.map((c) => [c.name.toLowerCase(), c._id]));
+  const defaultsByName = Object.fromEntries(MENU_CATEGORIES.map((c) => [c.name.toLowerCase(), c]));
   const byName = new Map();
 
   for (const cat of apiCategories) {
@@ -33,11 +59,15 @@ export function mergeMenuCategories(apiCategories = []) {
       .toLowerCase();
     if (!nameKey) continue;
     const slug = slugByName[nameKey];
+    const fallback = defaultsByName[nameKey];
     byName.set(nameKey, {
       _id: cat._id,
       name: cat.name,
-      shortDesc: cat.shortDesc || "",
-      longDesc: cat.longDesc || "Explore the Foods of this category!",
+      shortDesc: cat.shortDesc || fallback?.shortDesc || "",
+      longDesc:
+        cat.longDesc ||
+        fallback?.longDesc ||
+        "Browse delicious foods in this category and add your favourites to the cart.",
       image: categoryImageFor(cat.name, cat.image),
       filterId: slug || String(cat._id),
     });
@@ -49,8 +79,8 @@ export function mergeMenuCategories(apiCategories = []) {
     byName.set(nameKey, {
       _id: cat._id,
       name: cat.name,
-      shortDesc: "",
-      longDesc: "This is a popular category of Bangladesh. Explore the Foods of this category!",
+      shortDesc: cat.shortDesc,
+      longDesc: cat.longDesc,
       image: categoryImageFor(cat.name),
       filterId: cat._id,
     });
@@ -59,8 +89,8 @@ export function mergeMenuCategories(apiCategories = []) {
   return Array.from(byName.values());
 }
 
-const DEFAULT_DESCRIPTION = "This is a popular Food of Bangladesh. Order Now to Grab a bite of it!";
-const DEFAULT_DETAILS = "Freshly prepared and tasty food item from this category.";
+const DEFAULT_DESCRIPTION = "Freshly prepared menu item — add to cart and order now.";
+const DEFAULT_DETAILS = "Prepared fresh in our kitchen and ready for pickup or delivery.";
 
 export const MENU_FOODS = [
   { _id: "bd-chicken-roast", categoryId: "bangladeshi", fname: "Chicken Roast", image: "/images/Bangladeshi/Chicken RoastBangladeshi Chicken Roast (Bangladeshi ).jpg" },

@@ -1162,7 +1162,9 @@ export default function EmployeePage() {
                     {paginatedCategoryRows.map((category) => {
                       const imageSrc = categoryImageFor(category.name, category.image);
                       const summary =
-                        category.longDesc || category.shortDesc || "Explore the Foods of this category!";
+                        category.longDesc ||
+                        category.shortDesc ||
+                        "Browse delicious foods in this category and add your favourites to the cart.";
                       return (
                         <div
                           key={category._id}

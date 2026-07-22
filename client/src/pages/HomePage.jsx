@@ -46,7 +46,7 @@ export default function HomePage() {
       id: category.filterId,
       title: category.name,
       image: category.image,
-      details: category.longDesc || category.shortDesc || "Explore the foods of this category!",
+      details: category.longDesc || category.shortDesc || "Browse delicious foods in this category!",
     }));
   }, [apiCategories]);
 
@@ -59,13 +59,34 @@ export default function HomePage() {
   ];
 
   const reviews = [
-    { name: "John", text: "The food of this resturant is just like heaven for me! Its so delicious and tasty that I can't help going there every weekend!" },
-    { name: "James", text: "The food of this resturant is just like heaven for me! Its so delicious and tasty that I can't help going there every weekend!" },
-    { name: "Rolex", text: "The food of this resturant is just like heaven for me! Its so delicious and tasty that I can't help going there every weekend!" },
-    { name: "Farhan Ahmed", text: "The food of this resturant is just like heaven for me! Its so delicious and tasty that I can't help going there every weekend!" },
-    { name: "Bappy Khan", text: "The food of this resturant is just like heaven for me! Its so delicious and tasty that I can't help going there every weekend!" },
-    { name: "Diana", text: "The food of this resturant is just like heaven for me! Its so delicious and tasty that I can't help going there every weekend!" },
-    { name: "Doe", text: "The food of this resturant is just like heaven for me! Its so delicious and tasty that I can't help going there every weekend!" },
+    {
+      name: "Ayesha Rahman",
+      text: "The Bangladeshi dishes taste just like home cooking. Ordering online was quick and my delivery arrived hot!",
+    },
+    {
+      name: "James Carter",
+      text: "Loved the Chinese noodles and clear menu categories. Easy cart checkout and friendly service.",
+    },
+    {
+      name: "Nusrat Jahan",
+      text: "Great variety — from snacks to Thai curry. The pickup option saved me time on a busy day.",
+    },
+    {
+      name: "Farhan Ahmed",
+      text: "Fresh food, fair prices, and smooth online payment. This is my go-to place for weekend meals.",
+    },
+    {
+      name: "Sara Khan",
+      text: "The Italian pasta and desserts were excellent. I appreciate being able to track my order status.",
+    },
+    {
+      name: "Rafiul Islam",
+      text: "Snacks and tea are perfect for evening cravings. Adding items to the cart is simple and fast.",
+    },
+    {
+      name: "Maya Chowdhury",
+      text: "Clean UI, tasty menu, and reliable delivery. Highly recommended for family orders!",
+    },
   ];
 
   const showNextSlide = useCallback(() => {
@@ -168,7 +189,10 @@ export default function HomePage() {
         </h2>
         <div className="grid items-end gap-6 md:grid-cols-[1.7fr_1fr] md:gap-8">
           <p className="mx-auto max-w-[700px] text-center text-[14px] leading-7 text-zinc-600 dark:text-zinc-400 md:text-left">
-            Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quibusdam ea molestiae, ipsa, tenetur itaque dicta libero delectus incidunt fuga repudiandae est rerum expedita quia debitis quam illo vero laboriosam numquam eius molestias! Quas reprehenderit voluptatem nemo, fugiat modi atque illo earum ea tenetur sed ipsam repellat minus quibusdam doloremque aliquid odio dolorum reiciendis quisquam eum nobis. Laboriosam officia aut, laudantium tempora, voluptates doloremque, quia, reiciendis voluptas voluptatum recusandae ipsam! Illo aliquid possimus porro reiciendis eveniet consectetur eligendi amet. Voluptate officia provident recusandae eum minus aut nam asperiores beatae sit repellat odio maiores quisquam reprehenderit vel sapiente, voluptas facilis harum dolor hic doloribus, dolores. Non quo magni modi consequatur cumque maiores illum veniam quaerat magnam cum nemo harum, veritatis iure possimus, architecto aperiam quas enim reprehenderit voluptates neque corporis perspiciatis. Nihil soluta, sed nisi, et aliquid facere sequi consectetur quaerat quidem voluptatem numquam magnam animi consequatur tempore ipsum iusto veritatis ea!
+            Resturant is an online food ordering and restaurant management system. Customers can explore categories,
+            choose delicious meals, add items to the cart, and place pickup or home-delivery orders. Behind the scenes,
+            admins and employees manage foods, update availability, confirm new orders, and mark them delivered — so
+            every guest gets fresh food and every order stays organised from kitchen to doorstep.
           </p>
           <img
             src="/images/cooking-6668437_1280.png"
@@ -212,7 +236,7 @@ export default function HomePage() {
                       </button>
                     </div>
                     <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-                      Wanna check out the Mouth-Watering Foods of this category ? Explore Now!
+                      Discover tasty dishes in this category. Tap to browse the full menu and order your favourites!
                     </p>
                   </div>
                 </article>
@@ -270,7 +294,10 @@ export default function HomePage() {
       <section className="mx-auto max-w-5xl px-4 py-8 text-center">
         <h2 className="mb-4 text-3xl font-semibold sm:text-4xl">ABOUT US</h2>
         <p className="text-sm leading-7 text-zinc-600 dark:text-zinc-400">
-          Lorem ipsum dolor sit amet, consectetur adipisicing elit. Laboriosam optio deserunt labore impedit maiores non consequuntur fugiat, nostrum animi dolor illum, distinctio veniam dicta, reiciendis voluptatum voluptas modi ad sequi assumenda! Eum beatae voluptatum quod labore voluptas quis sint dolorum, architecto autem at. Atque esse, adipisci similique consequuntur cupiditate unde recusandae consequatur accusantium culpa voluptate. Est, mollitia, debitis. Molestiae odio cupiditate odit, illo culpa mollitia sint possimus commodi nemo aperiam quia, harum nulla repellendus iusto. Eligendi nulla laudantium ratione deleniti nostrum. Commodi deleniti temporibus culpa consequatur perspiciatis quae quis, at non molestias dolores dolor quos, illum quidem nulla velit. Architecto, voluptate, id nobis, beatae quisquam omnis minima officia ab voluptas ipsa quia debitis, nemo error! Facilis, ullam. Laboriosam distinctio incidunt optio, impedit maiores eius asperiores amet totam facilis eaque in minus, repellat, architecto iure odio quod possimus. Quam, tempora hic. Ratione nihil eos tenetur vel veniam molestiae, enim maxime deserunt.
+          We bring authentic flavours from Bangladeshi kitchens, Chinese woks, Italian ovens, Thai spices, and everyday
+          snacks into one easy ordering experience. Whether you want a quick snack, a family dinner, or a special meal
+          delivered to your door, Resturant helps you order online while our team manages the menu and fulfills every
+          order with care.
         </p>
         <Link
           to="/about"
@@ -282,13 +309,26 @@ export default function HomePage() {
 
       <section className="mx-auto grid max-w-6xl gap-5 px-4 py-10 sm:px-8 sm:py-14 md:grid-cols-3 md:gap-6">
         {[
-          { icon: "local_dining", title: "Variety of Dishes" },
-          { icon: "local_shipping", title: "Free Delivery" },
-          { icon: "mood", title: "Excellent Quality" },
+          {
+            icon: "local_dining",
+            title: "Variety of Dishes",
+            desc: "Bangladeshi, Chinese, Italian, Thai, and snacks in one menu.",
+          },
+          {
+            icon: "local_shipping",
+            title: "Fast Delivery",
+            desc: "Order for home delivery or pickup — track every step.",
+          },
+          {
+            icon: "mood",
+            title: "Quality Food",
+            desc: "Freshly prepared meals with clear prices and easy checkout.",
+          },
         ].map((item) => (
           <div key={item.title} className="rounded-lg bg-white dark:bg-zinc-900 px-8 py-10 text-center shadow-sm sm:px-[50px] sm:py-[50px]">
             <span className="material-icons text-6xl">{item.icon}</span>
             <h3 className="mt-4 text-xl font-semibold">{item.title}</h3>
+            <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">{item.desc}</p>
           </div>
         ))}
       </section>

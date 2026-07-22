@@ -1735,7 +1735,7 @@ export default function AdminPage() {
                       const summary =
                         category.longDesc ||
                         category.shortDesc ||
-                        "Explore the Foods of this category!";
+                        "Browse delicious foods in this category and add your favourites to the cart.";
                       return (
                         <div
                           key={category._id}
