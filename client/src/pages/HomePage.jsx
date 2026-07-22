@@ -188,7 +188,7 @@ export default function HomePage() {
           Resturant Powered By Students
         </h2>
         <div className="grid items-end gap-6 md:grid-cols-[1.7fr_1fr] md:gap-8">
-          <p className="mx-auto max-w-[700px] text-center text-[14px] leading-7 text-zinc-600 dark:text-zinc-400 md:text-left">
+          <p className="mx-auto max-w-[700px] text-center text-base leading-8 text-zinc-600 dark:text-zinc-400 sm:text-lg sm:leading-9 md:text-left">
             Resturant is an online food ordering and restaurant management system. Customers can explore categories,
             choose delicious meals, add items to the cart, and place pickup or home-delivery orders. Behind the scenes,
             admins and employees manage foods, update availability, confirm new orders, and mark them delivered — so
