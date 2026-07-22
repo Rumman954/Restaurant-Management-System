@@ -118,7 +118,8 @@ export default function CartPage() {
     if (!stripePromise) {
       setStatus({
         type: "error",
-        message: "Online payment is not configured. Add VITE_STRIPE_PUBLISHABLE_KEY to client .env.",
+        message:
+          "Online payment is not configured. Add VITE_STRIPE_PUBLISHABLE_KEY and STRIPE_SECRET_KEY in Vercel Environment Variables, then redeploy.",
       });
       return;
     }
@@ -131,6 +132,10 @@ export default function CartPage() {
         { items, deliveryType },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      if (!res?.data?.clientSecret) {
+        setStatus({ type: "error", message: "Stripe did not return a payment session." });
+        return;
+      }
       setClientSecret(res.data.clientSecret);
       setPaymentView("stripe");
     } catch (error) {
@@ -396,6 +401,12 @@ export default function CartPage() {
               Total payable: <span className="font-semibold text-zinc-800 dark:text-zinc-200">{formatAmount(totals.total)}</span>
             </p>
 
+            {status.type === "error" && status.message && paymentStep && (
+              <p className="mb-4 rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-300">
+                {status.message}
+              </p>
+            )}
+
             {paymentView === "choose" && (
               <div className="space-y-3">
                 <button
@@ -411,9 +422,11 @@ export default function CartPage() {
                   type="button"
                   disabled={placing}
                   onClick={startOnlinePayment}
-                  className="w-full rounded-xl border border-zinc-200 p-4 text-left transition hover:border-[#ee6e73] hover:bg-rose-50/50 dark:border-zinc-700 dark:hover:border-[#f0a8ad] dark:hover:bg-[#421F37]/10"
+                  className="w-full rounded-xl border border-zinc-200 p-4 text-left transition hover:border-[#ee6e73] hover:bg-rose-50/50 disabled:opacity-60 dark:border-zinc-700 dark:hover:border-[#f0a8ad] dark:hover:bg-[#421F37]/10"
                 >
-                  <p className="font-semibold text-zinc-800 dark:text-zinc-200">Online Payment</p>
+                  <p className="font-semibold text-zinc-800 dark:text-zinc-200">
+                    {placing ? "Opening Stripe..." : "Online Payment"}
+                  </p>
                   <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
                     Pay securely with card, mobile wallet, or other supported methods.
                   </p>

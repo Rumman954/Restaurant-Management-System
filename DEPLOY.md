@@ -48,8 +48,10 @@ Optional:
 | Name | Value |
 |------|--------|
 | `CLIENT_ORIGIN` | `https://restaurant-management-system-omega-liard.vercel.app` |
-| `STRIPE_SECRET_KEY` | your Stripe secret (only if using online pay) |
-| `VITE_STRIPE_PUBLISHABLE_KEY` | your Stripe publishable key |
+| `STRIPE_SECRET_KEY` | from Stripe Dashboard → Developers → API keys (`sk_test_...`) |
+| `VITE_STRIPE_PUBLISHABLE_KEY` | from Stripe Dashboard → Developers → API keys (`pk_test_...`) |
+
+**Stripe note:** both keys are required for Online Payment. After adding `VITE_*` keys, you must **Redeploy** (Vite embeds them at build time).
 
 ---
 
