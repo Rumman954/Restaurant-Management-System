@@ -3,7 +3,7 @@ import { Link, Navigate, useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 import { formatAmount, formatPrice } from "../lib/formatPrice";
 import { useTheme } from "../context/ThemeContext";
-import { categoryImageFor } from "../data/menuCatalog";
+import { MENU_FOODS, categoryImageFor, categoryLabel } from "../data/menuCatalog";
 
 const FOODS_PER_PAGE = 8;
 const CATEGORIES_PER_PAGE = 8;
@@ -389,10 +389,34 @@ export default function EmployeePage() {
   const menuItemCount = dashboard.stats?.totalFoods ?? dashboard.foods.length;
   const totalUserCount = dashboard.stats?.totalUsers ?? dashboard.users.length;
 
-  const foodRows = useMemo(
-    () =>
-      (dashboard.foods || []).map((food) => ({
+  const foodRows = useMemo(() => {
+    const dbByName = new Map(
+      (dashboard.foods || []).map((food) => [String(food.fname || "").trim().toLowerCase(), food])
+    );
+    const menuNames = new Set(MENU_FOODS.map((food) => food.fname.trim().toLowerCase()));
+
+    const fromMenu = MENU_FOODS.map((food) => {
+      const db = dbByName.get(food.fname.trim().toLowerCase());
+      return {
         key: food._id,
+        menuId: food._id,
+        _id: db?._id || food._id,
+        dbId: db?._id || null,
+        fname: db?.fname || food.fname,
+        description: db?.description || food.description || "",
+        categoryName: db?.categoryId?.name || categoryLabel(food.categoryId),
+        categoryId: db?.categoryId?._id || db?.categoryId || food.categoryId,
+        price: Number(db?.price) > 0 ? Number(db.price) : 0,
+        image: db?.image || food.image || "",
+        available: db ? db.available !== false : true,
+      };
+    });
+
+    const fromDbOnly = (dashboard.foods || [])
+      .filter((food) => !menuNames.has(String(food.fname || "").trim().toLowerCase()))
+      .map((food) => ({
+        key: food._id,
+        menuId: null,
         _id: food._id,
         dbId: food._id,
         fname: food.fname || "—",
@@ -402,9 +426,10 @@ export default function EmployeePage() {
         price: Number(food.price) > 0 ? Number(food.price) : 0,
         image: food.image || "",
         available: food.available !== false,
-      })),
-    [dashboard.foods]
-  );
+      }));
+
+    return [...fromMenu, ...fromDbOnly];
+  }, [dashboard.foods]);
 
   const filteredFoodRows = useMemo(() => {
     const q = foodsSearch.trim().toLowerCase();
@@ -586,13 +611,20 @@ export default function EmployeePage() {
   };
 
   const openEditFoodModal = (food) => {
+    if (!food.dbId) {
+      setActionStatus({
+        type: "error",
+        message: "This food is not in the database yet. Refresh the page, or ask an admin to save it once.",
+      });
+      return;
+    }
     setFoodForm({
       fname: food.fname === "—" ? "" : food.fname || "",
       description: food.description || "",
       price: Number(food.price) > 0 ? String(food.price) : "",
       available: food.available !== false,
     });
-    setFoodModal({ open: true, foodId: food._id || food.key });
+    setFoodModal({ open: true, foodId: food.dbId });
   };
 
   const closeFoodModal = () => {
@@ -602,6 +634,10 @@ export default function EmployeePage() {
 
   const handleSaveFood = async (event) => {
     event.preventDefault();
+    if (!foodModal.foodId) {
+      setActionStatus({ type: "error", message: "Food is not saved in the database yet." });
+      return;
+    }
     if (!foodForm.fname.trim()) {
       setActionStatus({ type: "error", message: "Food name is required." });
       return;
@@ -633,11 +669,17 @@ export default function EmployeePage() {
   };
 
   const handleToggleFoodAvailability = async (food) => {
-    const foodId = food._id || food.key;
+    if (!food.dbId) {
+      setActionStatus({
+        type: "error",
+        message: "This food is not in the database yet. Refresh the page after deploy, then try again.",
+      });
+      return;
+    }
     const nextAvailable = food.available === false;
     try {
       const res = await api.put(
-        `/employee/foods/${foodId}`,
+        `/employee/foods/${food.dbId}`,
         { available: nextAvailable },
         { headers: { Authorization: `Bearer ${token}` } }
       );

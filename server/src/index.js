@@ -3,6 +3,7 @@ const { createApp } = require("./app");
 const connectDb = require("./config/db");
 const { ensureDefaultCategories } = require("./ensureCategories");
 const { ensureDemoUsers } = require("./ensureDemoUsers");
+const { ensureMenuFoods } = require("./ensureMenuFoods");
 
 const app = createApp();
 const port = process.env.PORT || 5000;
@@ -10,6 +11,7 @@ const port = process.env.PORT || 5000;
 async function start() {
   await connectDb();
   await ensureDefaultCategories();
+  await ensureMenuFoods();
   await ensureDemoUsers();
   app.listen(port, () => {
     console.log(`Server on ${port}`);

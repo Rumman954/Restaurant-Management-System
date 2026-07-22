@@ -10,6 +10,7 @@ const { createApp } = require("../server/src/app");
 const connectDb = require("../server/src/config/db");
 const { ensureDefaultCategories } = require("../server/src/ensureCategories");
 const { ensureDemoUsers } = require("../server/src/ensureDemoUsers");
+const { ensureMenuFoods } = require("../server/src/ensureMenuFoods");
 
 const app = createApp();
 
@@ -20,6 +21,7 @@ async function ensureReady() {
     readyPromise = (async () => {
       await connectDb();
       await ensureDefaultCategories();
+      await ensureMenuFoods();
       await ensureDemoUsers();
     })();
   }

@@ -1,0 +1,248 @@
+[
+  {
+    "categorySlug": "bangladeshi",
+    "fname": "Chicken Roast",
+    "image": "/images/Bangladeshi/Chicken RoastBangladeshi Chicken Roast (Bangladeshi ).jpg",
+    "description": "Tender roasted chicken with rich Bengali spices and a golden finish."
+  },
+  {
+    "categorySlug": "bangladeshi",
+    "fname": "Morog Polao",
+    "image": "/images/Bangladeshi/Morog Polao(Bangladeshi).jpg",
+    "description": "Fragrant rice cooked with chicken and aromatic whole spices."
+  },
+  {
+    "categorySlug": "bangladeshi",
+    "fname": "Roshmalai",
+    "image": "/images/Bangladeshi/Roshmalai(Bangladeshi).jpg",
+    "description": "Soft cottage-cheese balls soaked in sweet, creamy milk syrup."
+  },
+  {
+    "categorySlug": "bangladeshi",
+    "fname": "Beef Kala Bhuna",
+    "image": "/images/Bangladeshi/Beef Kala Bhuna (Bangladeshi).jpg",
+    "description": "Dark, slow-cooked beef bhuna with bold spices and caramelised onions."
+  },
+  {
+    "categorySlug": "bangladeshi",
+    "fname": "Chicken Kosha",
+    "image": "/images/Bangladeshi/Chicken Kosha(Bangladeshi).jpg",
+    "description": "Thick, spicy chicken curry cooked down for deep homemade flavour."
+  },
+  {
+    "categorySlug": "bangladeshi",
+    "fname": "Chingri Malai Curry",
+    "image": "/images/Bangladeshi/Chingri Malai Curry (Bangladeshi).jpg",
+    "description": "Prawns simmered in a creamy coconut-milk curry."
+  },
+  {
+    "categorySlug": "bangladeshi",
+    "fname": "Mixed Vegetables",
+    "image": "/images/Bangladeshi/Mixed Vegitables(Bangladeshi).jpg",
+    "description": "Seasonal vegetables lightly spiced for a fresh, healthy side."
+  },
+  {
+    "categorySlug": "bangladeshi",
+    "fname": "Bhorta",
+    "image": "/images/Bangladeshi/Bhorta(BAngladeshi).jpg",
+    "description": "Mashed vegetable mash with mustard oil, onion, and green chilli."
+  },
+  {
+    "categorySlug": "bangladeshi",
+    "fname": "Sada Bhat",
+    "image": "/images/Bangladeshi/sadhabhat(Bangladeshi).webp",
+    "description": "Steamed plain rice — soft, fluffy, and ready for any curry."
+  },
+  {
+    "categorySlug": "bangladeshi",
+    "fname": "Achari Chicken Khichuri",
+    "image": "/images/Bangladeshi/achari-chicken-vhuna-khichuri (Bangladeshi).jpg",
+    "description": "Comforting khichuri served with tangy achari chicken."
+  },
+  {
+    "categorySlug": "bangladeshi",
+    "fname": "Shorshe Ilish",
+    "image": "/images/Bangladeshi/Shorshe Ilish (bangladeshi).jpg",
+    "description": "Hilsa fish cooked in classic mustard-seed gravy."
+  },
+  {
+    "categorySlug": "bangladeshi",
+    "fname": "Mishti Doi",
+    "image": "/images/Bangladeshi/Mishti Doi(Bangladeshi).jpg",
+    "description": "Sweet caramelised yogurt with a smooth, creamy texture."
+  },
+  {
+    "categorySlug": "bangladeshi",
+    "fname": "Baingan Bhaja",
+    "image": "/images/Bangladeshi/Baingan Bhaja(BAngladeshi).webp",
+    "description": "Crispy pan-fried eggplant slices with light seasoning."
+  },
+  {
+    "categorySlug": "chinese",
+    "fname": "Biangbiang Noodles",
+    "image": "/images/Chinese/Biangbiang Noodles (Chinese).jpg",
+    "description": "Hand-pulled wide noodles tossed in spicy chilli oil."
+  },
+  {
+    "categorySlug": "chinese",
+    "fname": "Cold Noodles",
+    "image": "/images/Chinese/Cold Noodles (Chinese).jpg",
+    "description": "Chilled noodles with a light, refreshing sesame-style dressing."
+  },
+  {
+    "categorySlug": "chinese",
+    "fname": "Beef Suimai",
+    "image": "/images/Chinese/Beef Suimai(chinese).jpg",
+    "description": "Steamed dumplings filled with seasoned minced beef."
+  },
+  {
+    "categorySlug": "chinese",
+    "fname": "Hand-Eaten Lamb",
+    "image": "/images/Chinese/Hand-Eaten Lamb (Chinese).jpeg",
+    "description": "Tender lamb pieces served for sharing with rich spices."
+  },
+  {
+    "categorySlug": "chinese",
+    "fname": "Big Plate Chicken",
+    "image": "/images/Chinese/Big Plate Chicken (Chinese).jpg",
+    "description": "Chicken and potatoes in a spicy, shareable one-plate stew."
+  },
+  {
+    "categorySlug": "chinese",
+    "fname": "Roujiamo",
+    "image": "/images/Chinese/Roujiamo (Chinese).webp",
+    "description": "Chinese-style meat sandwich in crisp, warm bread."
+  },
+  {
+    "categorySlug": "chinese",
+    "fname": "Chowmin",
+    "image": "/images/Chinese/Chowmin(Chinese).jpg",
+    "description": "Stir-fried noodles with vegetables and savoury soy seasoning."
+  },
+  {
+    "categorySlug": "chinese",
+    "fname": "Lanzhou Beef Noodles",
+    "image": "/images/Chinese/Lanzhou Beef Noodles (Chinese).jpg",
+    "description": "Clear beef broth noodles with tender slices of beef."
+  },
+  {
+    "categorySlug": "italian",
+    "fname": "Lasagna Bolognese",
+    "image": "/images/Italian/rich Lasagna Bolognese (Italian).jpg",
+    "description": "Layered pasta with rich meat sauce and melted cheese."
+  },
+  {
+    "categorySlug": "italian",
+    "fname": "Arancini",
+    "image": "/images/Italian/Arancini (Italian).jpg",
+    "description": "Crispy fried risotto balls with a soft, savoury centre."
+  },
+  {
+    "categorySlug": "italian",
+    "fname": "Osso Buco",
+    "image": "/images/Italian/Osso Buco (Italian).jpeg",
+    "description": "Slow-braised veal shank in a deep, elegant Italian sauce."
+  },
+  {
+    "categorySlug": "italian",
+    "fname": "Bruschetta",
+    "image": "/images/Italian/Bruschetta (Italian).webp",
+    "description": "Toasted bread topped with fresh tomato, garlic, and herbs."
+  },
+  {
+    "categorySlug": "italian",
+    "fname": "Carbonara",
+    "image": "/images/Italian/Carbonara (Italian).jpg",
+    "description": "Creamy pasta with egg, cheese, and classic carbonara richness."
+  },
+  {
+    "categorySlug": "italian",
+    "fname": "Creamy Shrimp Risotto",
+    "image": "/images/Italian/creamy-shrimp-risotto-with-mascarpone (Italian).webp",
+    "description": "Creamy risotto finished with shrimp and soft cheese."
+  },
+  {
+    "categorySlug": "italian",
+    "fname": "Gnocchi",
+    "image": "/images/Italian/Gnocchi (Italian).jpg",
+    "description": "Soft potato dumplings served with a flavourful Italian sauce."
+  },
+  {
+    "categorySlug": "snacks",
+    "fname": "Egg Roll",
+    "image": "/images/Snacks/Egg roll(Snacks).JPG",
+    "description": "Crispy rolled snack filled with egg and savoury seasoning."
+  },
+  {
+    "categorySlug": "snacks",
+    "fname": "Green Tea",
+    "image": "/images/Snacks/Green Tea (Snacks).jpg",
+    "description": "Light, refreshing green tea served hot."
+  },
+  {
+    "categorySlug": "snacks",
+    "fname": "Chotpoti",
+    "image": "/images/Snacks/Chotpoti (Snacks).jpg",
+    "description": "Tangy chickpea street snack with spicy tamarind flavours."
+  },
+  {
+    "categorySlug": "snacks",
+    "fname": "Black Tea",
+    "image": "/images/Snacks/Black tea (Snacks).webp",
+    "description": "Strong black tea brewed for a bold everyday cup."
+  },
+  {
+    "categorySlug": "snacks",
+    "fname": "Coffee",
+    "image": "/images/Snacks/Coffee (Snacks).jpg",
+    "description": "Freshly prepared coffee with a smooth, aromatic taste."
+  },
+  {
+    "categorySlug": "snacks",
+    "fname": "French Fries",
+    "image": "/images/Snacks/French Fries(Snacks).jpg",
+    "description": "Crispy golden fries seasoned and served hot."
+  },
+  {
+    "categorySlug": "snacks",
+    "fname": "Milk Tea",
+    "image": "/images/Snacks/Milk Tea (Snacks).jpg",
+    "description": "Creamy milk tea with a sweet, comforting finish."
+  },
+  {
+    "categorySlug": "thai",
+    "fname": "Tom Kha Gai",
+    "image": "/images/Thai/Tom Kha Gai(Thai).jpg",
+    "description": "Creamy coconut chicken soup with lemongrass and galangal."
+  },
+  {
+    "categorySlug": "thai",
+    "fname": "Tom Yum Goong",
+    "image": "/images/Thai/Tom Yum Goong(Thai).jpg",
+    "description": "Hot-and-sour prawn soup with bold Thai herbs."
+  },
+  {
+    "categorySlug": "thai",
+    "fname": "Som Tam",
+    "image": "/images/Thai/Som Tam(Thai).webp",
+    "description": "Fresh green papaya salad with chilli, lime, and nuts."
+  },
+  {
+    "categorySlug": "thai",
+    "fname": "Momos",
+    "image": "/images/Thai/Momos(Thai).jpeg",
+    "description": "Steamed dumplings filled with savoury seasoned stuffing."
+  },
+  {
+    "categorySlug": "thai",
+    "fname": "Khao Niew Mamuang",
+    "image": "/images/Thai/Khao Niew Mamuang (Thai).webp",
+    "description": "Sweet sticky rice served with ripe mango and coconut milk."
+  },
+  {
+    "categorySlug": "thai",
+    "fname": "Massaman Curry",
+    "image": "/images/Thai/Massaman Curry(Thai).webp",
+    "description": "Mild Thai curry with warm spices, coconut, and tender meat."
+  }
+]
