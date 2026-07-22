@@ -42,12 +42,26 @@ export default function HomePage() {
 
   const featuredCategories = useMemo(() => {
     const all = mergeMenuCategories(apiCategories);
-    return all.slice(0, 3).map((category) => ({
-      id: category.filterId,
-      title: category.name,
-      image: category.image,
-      details: category.longDesc || category.shortDesc || "Browse delicious foods in this category!",
-    }));
+    return all.slice(0, 3).map((category) => {
+      const shortText =
+        category.shortDesc ||
+        `Discover delicious ${category.name} dishes — tap to explore the full menu.`;
+      const longText =
+        category.longDesc ||
+        category.shortDesc ||
+        "Browse delicious foods in this category and add your favourites to the cart.";
+      return {
+        id: category.filterId,
+        title: category.name,
+        image: category.image,
+        // Front of card: short teaser
+        summary: shortText,
+        // Back of card: fuller description (prefer longDesc so it differs from front)
+        details: longText === shortText
+          ? `${longText} Click this category to view all items and start ordering.`
+          : longText,
+      };
+    });
   }, [apiCategories]);
 
   const galleryImages = [
@@ -240,9 +254,7 @@ export default function HomePage() {
                         ⋮
                       </button>
                     </div>
-                    <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-                      Discover tasty dishes in this category. Tap to browse the full menu and order your favourites!
-                    </p>
+                    <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">{item.summary}</p>
                   </div>
                 </article>
 

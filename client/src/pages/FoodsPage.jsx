@@ -76,9 +76,20 @@ export default function FoodsPage() {
       );
       const nameKey = String(food.fname || "").trim().toLowerCase();
       const dbFood = dbPriceByName.get(nameKey);
+      const dbDescription = String(dbFood?.description || "").trim();
+      const weakDbDescription =
+        !dbDescription ||
+        /freshly prepared menu item|popular Food of Bangladesh|order now to grab/i.test(dbDescription);
+      const frontDescription = weakDbDescription ? food.description : dbDescription;
+      const backDetails =
+        food.details && food.details !== frontDescription
+          ? food.details
+          : `Order ${food.fname} now for pickup or home delivery — prepared fresh when you place your order.`;
       return {
         ...food,
         image: imageOverrides[food._id] || food.image,
+        description: frontDescription,
+        details: backDetails,
         price: Number(dbFood?.price) > 0 ? Number(dbFood.price) : 0,
         available: dbFood ? dbFood.available !== false : true,
         categoryKeys: keys ? Array.from(keys) : [food.categoryId],
@@ -102,8 +113,10 @@ export default function FoodsPage() {
         return {
           _id: food._id,
           fname: food.fname,
-          description: food.description || "This is a popular Food of Bangladesh. Order Now to Grab a bite of it!",
-          details: food.description || "Freshly prepared and tasty food item from this category.",
+          description:
+            food.description ||
+            `${food.fname} — freshly prepared and ready to order from our menu.`,
+          details: `Add ${food.fname} to your cart for pickup or delivery. Prepared fresh in our kitchen.`,
           image: imageOverrides[food._id] || food.image || "/images/Snacks.jpg",
           price: Number(food.price) > 0 ? Number(food.price) : 0,
           available: food.available !== false,
@@ -217,8 +230,12 @@ export default function FoodsPage() {
         <div className="grid items-stretch gap-6 md:grid-cols-2 lg:grid-cols-3">
           {displayedFoods.map((food) => {
             const id = food._id ?? food.fname;
-            const summary = food.description ?? "This is a popular Food of Bangladesh. Order Now to Grab a bite of it!";
-            const details = food.details ?? summary;
+            const summary =
+              food.description || `${food.fname} — freshly prepared and ready to order.`;
+            const details =
+              food.details && food.details !== summary
+                ? food.details
+                : `Add ${food.fname} to your cart for pickup or delivery.`;
             const image = food.image ?? "/images/Snacks.jpg";
             const priceLabel = formatPrice(food.price);
             const isExpanded = expandedFood === id;
@@ -230,67 +247,69 @@ export default function FoodsPage() {
                   className="relative h-full min-h-[380px] w-full rounded border border-zinc-200 dark:border-zinc-700 transition-transform duration-700 [transform-style:preserve-3d]"
                   style={{ transform: isExpanded ? "rotateY(180deg)" : "rotateY(0deg)" }}
                 >
-                  <article
-                    className={`absolute inset-0 flex flex-col overflow-hidden rounded bg-white shadow-sm [backface-visibility:hidden] dark:bg-zinc-900 ${
-                      !isAvailable ? "opacity-90" : ""
-                    }`}
-                  >
-                    <div className="food-media-frame relative h-36 shrink-0 sm:h-40">
-                      <img
-                        src={image}
-                        alt={food.fname}
-                        className={`food-media transition ${!isAvailable ? "scale-105 blur-[2px]" : ""}`}
-                      />
-                      {!isAvailable && (
-                        <span className="absolute left-3 top-3 rounded bg-rose-600/90 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
-                          Unavailable
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex min-h-0 flex-1 flex-col p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <h3 className="text-xl font-normal leading-tight sm:text-2xl">{food.fname}</h3>
-                          {priceLabel && (
-                            <p className="mt-1 text-base font-semibold text-[#ee6e73] dark:text-[#f0a8ad]">{priceLabel}</p>
-                          )}
-                          {!isAvailable && (
-                            <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-rose-600 dark:text-rose-400">
-                              Currently unavailable
-                            </p>
-                          )}
+                  <article className="absolute inset-0 flex flex-col overflow-hidden rounded bg-white shadow-sm [backface-visibility:hidden] dark:bg-zinc-900">
+                    <div
+                      className={`flex h-full min-h-0 flex-1 flex-col transition duration-300 ${
+                        !isAvailable ? "blur-[0.5px] opacity-80" : ""
+                      }`}
+                    >
+                      <div className="food-media-frame relative h-36 shrink-0 sm:h-40">
+                        <img src={image} alt={food.fname} className="food-media" />
+                      </div>
+                      <div className="flex min-h-0 flex-1 flex-col p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <h3 className="text-xl font-normal leading-tight sm:text-2xl">{food.fname}</h3>
+                            {priceLabel && (
+                              <p className="mt-1 text-base font-semibold text-[#ee6e73] dark:text-[#f0a8ad]">{priceLabel}</p>
+                            )}
+                            {!isAvailable && (
+                              <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-rose-600 dark:text-rose-400">
+                                Currently unavailable
+                              </p>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            className="shrink-0 text-xl leading-none text-zinc-700 dark:text-zinc-300 transition hover:text-zinc-900 dark:hover:text-white"
+                            onClick={() => setExpandedFood(id)}
+                            aria-label={`Show ${food.fname} details`}
+                          >
+                            ⋮
+                          </button>
                         </div>
+                        <p className="mt-2 line-clamp-3 flex-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">{summary}</p>
                         <button
                           type="button"
-                          className="shrink-0 text-xl leading-none text-zinc-700 dark:text-zinc-300 transition hover:text-zinc-900 dark:hover:text-white"
-                          onClick={() => setExpandedFood(id)}
-                          aria-label={`Show ${food.fname} details`}
+                          disabled={!isAvailable}
+                          className={`mt-4 w-full shrink-0 rounded-sm px-4 py-2 text-[11px] font-semibold uppercase tracking-wide transition ${
+                            isAvailable
+                              ? "brand-btn"
+                              : "cursor-not-allowed bg-zinc-200 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-500"
+                          }`}
+                          onClick={() => {
+                            if (!isAvailable) return;
+                            addItem(food);
+                            setCartNotice(`"${food.fname}" added to cart!`);
+                            window.setTimeout(() => setCartNotice(""), 2500);
+                          }}
                         >
-                          ⋮
+                          {isAvailable ? "Add to Cart" : "Unavailable"}
                         </button>
                       </div>
-                      <p className="mt-2 line-clamp-3 flex-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">{summary}</p>
-                      <button
-                        type="button"
-                        disabled={!isAvailable}
-                        className={`mt-4 w-full shrink-0 rounded-sm px-4 py-2 text-[11px] font-semibold uppercase tracking-wide transition ${
-                          isAvailable
-                            ? "brand-btn"
-                            : "cursor-not-allowed bg-zinc-200 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-500"
-                        }`}
-                        onClick={() => {
-                          if (!isAvailable) return;
-                          addItem(food);
-                          setCartNotice(`"${food.fname}" added to cart!`);
-                          window.setTimeout(() => setCartNotice(""), 2500);
-                        }}
-                      >
-                        {isAvailable ? "Add to Cart" : "Unavailable"}
-                      </button>
                     </div>
+                    {!isAvailable && (
+                      <span className="absolute left-1/2 top-[4.5rem] z-10 -translate-x-1/2 rounded-md bg-rose-600 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white shadow-lg sm:top-20">
+                        Unavailable
+                      </span>
+                    )}
                   </article>
 
-                  <article className="absolute inset-0 flex flex-col rounded bg-white p-4 shadow-sm [backface-visibility:hidden] [transform:rotateY(180deg)] dark:bg-zinc-900">
+                  <article
+                    className={`absolute inset-0 flex flex-col rounded bg-white p-4 shadow-sm [backface-visibility:hidden] [transform:rotateY(180deg)] dark:bg-zinc-900 ${
+                      !isAvailable ? "blur-[0.5px] opacity-80" : ""
+                    }`}
+                  >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <h3 className="text-xl font-normal leading-tight">{food.fname}</h3>

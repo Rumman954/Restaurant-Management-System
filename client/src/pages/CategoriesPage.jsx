@@ -31,7 +31,16 @@ export default function CategoriesPage() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {categories.map((category) => {
           const id = category.filterId;
-          const summary = category.longDesc || category.shortDesc;
+          // Front: keep the main category description
+          const frontText =
+            category.longDesc ||
+            category.shortDesc ||
+            "Browse delicious foods in this category and add your favourites to the cart.";
+          // Back: different text from the front
+          const backText =
+            category.shortDesc && category.shortDesc !== frontText
+              ? category.shortDesc
+              : `Click to browse all ${category.name} dishes, check prices, and place your order for delivery or pickup.`;
           const image = category.image;
           const isExpanded = expandedCategory === id;
 
@@ -68,7 +77,7 @@ export default function CategoriesPage() {
                         ⋮
                       </button>
                     </div>
-                    <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">{summary}</p>
+                    <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">{frontText}</p>
                   </div>
                 </article>
 
@@ -87,7 +96,7 @@ export default function CategoriesPage() {
                       ×
                     </button>
                   </div>
-                  <p className="mt-3 text-sm leading-6 text-zinc-600 dark:text-zinc-400">{summary}</p>
+                  <p className="mt-3 text-sm leading-6 text-zinc-600 dark:text-zinc-400">{backText}</p>
                 </article>
               </div>
             </div>
