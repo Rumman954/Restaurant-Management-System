@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 import { useTheme } from "../context/ThemeContext";
+import { DEMO_ACCOUNTS } from "../data/demoAccounts";
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -29,6 +30,8 @@ export default function Navbar() {
   const [fieldErrors, setFieldErrors] = useState({ email: "", password: "" });
   const [loginStatus, setLoginStatus] = useState({ type: "", message: "" });
   const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [selectedDemoRole, setSelectedDemoRole] = useState("");
+  const [showDemoLogin, setShowDemoLogin] = useState(false);
   const [registerForm, setRegisterForm] = useState({
     fullName: "",
     email: "",
@@ -77,6 +80,18 @@ export default function Navbar() {
     setLoginForm({ email: "", password: "" });
     setLoginStatus({ type: "", message: "" });
     setShowLoginPassword(false);
+    setSelectedDemoRole("");
+    setShowDemoLogin(false);
+  };
+
+  const applyDemoAccount = (demoId) => {
+    const demo = DEMO_ACCOUNTS.find((account) => account.id === demoId);
+    if (!demo) return;
+    setSelectedDemoRole(demo.id);
+    setLoginForm({ email: demo.email, password: demo.password });
+    setFieldErrors({ email: "", password: "" });
+    setLoginStatus({ type: "success", message: `${demo.label} demo credentials loaded. Click Login to continue.` });
+    setShowLoginPassword(true);
   };
 
   useEffect(() => {
@@ -94,6 +109,9 @@ export default function Navbar() {
     setIsLoginOpen(false);
     setFieldErrors({ email: "", password: "" });
     setLoginStatus({ type: "", message: "" });
+    setShowDemoLogin(false);
+    setSelectedDemoRole("");
+    setLoginForm({ email: "", password: "" });
   };
 
   const readOptionalImage = (file, onDone, onError) => {
@@ -170,6 +188,8 @@ export default function Navbar() {
         setAuthUser(res.data.user);
         if (res.data.user.role === "admin") {
           navigate("/admin");
+        } else if (res.data.user.role === "employee") {
+          navigate("/employee");
         }
       }
 
@@ -241,7 +261,9 @@ export default function Navbar() {
     { label: "Foods", to: "/foods" },
     { label: "Contact", to: "#" },
   ];
-  const navItemsWithAdmin = authUser?.role === "admin" ? [...navItems, { label: "Admin", to: "/admin" }] : navItems;
+  const navItemsWithRole = [...navItems];
+  if (authUser?.role === "admin") navItemsWithRole.push({ label: "Admin", to: "/admin" });
+  if (authUser?.role === "employee") navItemsWithRole.push({ label: "Dashboard", to: "/employee" });
 
   const accountItems = authUser
     ? []
@@ -369,7 +391,7 @@ export default function Navbar() {
         </Link>
 
           <div className="hidden items-center gap-8 text-sm font-medium lg:flex">
-          {navItemsWithAdmin.map((item) => (
+          {navItemsWithRole.map((item) => (
             item.label === "Contact" ? (
               <button
                 key={item.label}
@@ -493,7 +515,7 @@ export default function Navbar() {
                   <span>Hi, {displayName}</span>
                 </button>
               )}
-              {[...navItemsWithAdmin, ...accountItems].map((item) =>
+              {[...navItemsWithRole, ...accountItems].map((item) =>
                 item.label === "Contact" ? (
                   <button
                     key={item.label}
@@ -767,6 +789,7 @@ export default function Navbar() {
                     setLoginForm((prev) => ({ ...prev, email: event.target.value }));
                     setFieldErrors((prev) => ({ ...prev, email: "" }));
                     setLoginStatus({ type: "", message: "" });
+                    setSelectedDemoRole("");
                   }}
                   className={`w-full rounded-lg border px-3 py-2.5 text-zinc-800 dark:text-zinc-300 outline-none placeholder:text-zinc-400 focus:ring-2 ${
                     fieldErrors.email ? "border-rose-500 focus:ring-rose-100" : "border-zinc-300 dark:border-zinc-600 focus:border-[#ee6e73] dark:focus:border-[#421F37] focus:ring-rose-100"
@@ -788,6 +811,7 @@ export default function Navbar() {
                       setLoginForm((prev) => ({ ...prev, password: event.target.value }));
                       setFieldErrors((prev) => ({ ...prev, password: "" }));
                       setLoginStatus({ type: "", message: "" });
+                      setSelectedDemoRole("");
                     }}
                     className={`w-full rounded-lg border px-3 py-2.5 pr-10 text-zinc-800 dark:text-zinc-300 outline-none placeholder:text-zinc-400 focus:ring-2 ${
                       fieldErrors.password ? "border-rose-500 focus:ring-rose-100" : "border-zinc-300 dark:border-zinc-600 focus:border-[#ee6e73] dark:focus:border-[#421F37] focus:ring-rose-100"
@@ -833,9 +857,66 @@ export default function Navbar() {
             </form>
 
             <div className="my-5 flex items-center gap-3">
-              <span className="h-px flex-1 bg-zinc-200" />
+              <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-700" />
               <span className="text-xs uppercase tracking-wide text-zinc-400">or</span>
-              <span className="h-px flex-1 bg-zinc-200" />
+              <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-700" />
+            </div>
+
+            <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-950/60">
+              <button
+                type="button"
+                onClick={() => setShowDemoLogin((prev) => !prev)}
+                className="flex w-full items-center justify-between text-left"
+              >
+                <span className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Demo Login</span>
+                <span className="text-xs font-medium text-[#ee6e73] dark:text-[#f0a8ad]">{showDemoLogin ? "Hide" : "Show"}</span>
+              </button>
+
+              {showDemoLogin && (
+                <div className="mt-4 space-y-3">
+                  <p className="text-xs leading-5 text-zinc-600 dark:text-zinc-400">
+                    Choose a role to fill the login form, or type any demo email and password below, then click{" "}
+                    <span className="font-semibold">Login</span>.
+                  </p>
+                  <div className="rounded-lg border border-dashed border-zinc-300 bg-white px-3 py-2 text-[11px] leading-5 text-zinc-600 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-400">
+                    {DEMO_ACCOUNTS.map((demo) => (
+                      <p key={demo.id}>
+                        <span className="font-semibold text-zinc-800 dark:text-zinc-200">{demo.label}:</span> {demo.email} / {demo.password}
+                      </p>
+                    ))}
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    {DEMO_ACCOUNTS.map((demo) => {
+                      const isActive = selectedDemoRole === demo.id;
+                      return (
+                        <button
+                          key={demo.id}
+                          type="button"
+                          onClick={() => applyDemoAccount(demo.id)}
+                          className={`rounded-lg border px-3 py-2 text-left transition ${
+                            isActive
+                              ? "border-[#ee6e73] bg-rose-50 dark:border-[#f0a8ad] dark:bg-[#421F37]/20"
+                              : "border-zinc-300 bg-white hover:border-zinc-400 dark:border-zinc-600 dark:bg-zinc-900 dark:hover:border-zinc-500"
+                          }`}
+                        >
+                          <span className="block text-sm font-semibold text-zinc-800 dark:text-zinc-200">{demo.label}</span>
+                          <span className="mt-1 block text-[11px] leading-4 text-zinc-500 dark:text-zinc-400">{demo.hint}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {selectedDemoRole && (
+                    <div className="rounded-lg border border-dashed border-zinc-300 bg-white px-3 py-2 text-xs text-zinc-600 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-400">
+                      <p>
+                        <span className="font-semibold text-zinc-800 dark:text-zinc-200">Email:</span> {loginForm.email}
+                      </p>
+                      <p className="mt-1">
+                        <span className="font-semibold text-zinc-800 dark:text-zinc-200">Password:</span> {loginForm.password}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <button

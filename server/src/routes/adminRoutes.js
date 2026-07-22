@@ -60,6 +60,21 @@ router.put("/admin/users/:userId/role", requireAuth, requireAdmin, async (req, r
     const user = await User.findById(userId).select("-password");
     if (!user) return res.status(404).json({ code: "0", msg: "User not found." });
 
+    const currentRole = user.role || "customer";
+    const allowedNextRoles = {
+      customer: ["employee"],
+      employee: ["admin", "customer"],
+      admin: [],
+    };
+
+    if (!allowedNextRoles[currentRole]?.includes(role)) {
+      const msg =
+        currentRole === "customer" && role === "admin"
+          ? "User must be an employee before becoming admin."
+          : "This role change is not allowed.";
+      return res.status(400).json({ code: "0", msg });
+    }
+
     user.role = role;
     await user.save();
 
@@ -147,7 +162,7 @@ router.put("/admin/users/:userId/image", requireAuth, requireAdmin, async (req, 
 
 router.post("/admin/foods", requireAuth, requireAdmin, async (req, res) => {
   try {
-    const { fname, description, categoryId, image, price } = req.body;
+    const { fname, description, categoryId, image, price, available } = req.body;
     if (!fname || !String(fname).trim()) return res.status(400).json({ code: "0", msg: "Food name is required." });
     if (!categoryId) return res.status(400).json({ code: "0", msg: "Category is required." });
 
@@ -165,6 +180,7 @@ router.post("/admin/foods", requireAuth, requireAdmin, async (req, res) => {
       categoryId,
       image: image ? String(image).trim() : "",
       price: parsedPrice > 0 ? parsedPrice : 0,
+      available: available !== undefined ? Boolean(available) : true,
     });
     await food.populate("categoryId", "name");
 
@@ -177,7 +193,7 @@ router.post("/admin/foods", requireAuth, requireAdmin, async (req, res) => {
 router.put("/admin/foods/:foodId", requireAuth, requireAdmin, async (req, res) => {
   try {
     const { foodId } = req.params;
-    const { fname, description, categoryId, image, price } = req.body;
+    const { fname, description, categoryId, image, price, available } = req.body;
 
     const food = await Food.findById(foodId);
     if (!food) return res.status(404).json({ code: "0", msg: "Food not found." });
@@ -200,6 +216,7 @@ router.put("/admin/foods/:foodId", requireAuth, requireAdmin, async (req, res) =
       if (!category) return res.status(400).json({ code: "0", msg: "Category not found." });
       food.categoryId = categoryId;
     }
+    if (available !== undefined) food.available = Boolean(available);
 
     await food.save();
     await food.populate("categoryId", "name");

@@ -63,7 +63,7 @@ export default function FoodsPage() {
     }
 
     const dbPriceByName = new Map(
-      apiFoods.map((food) => [String(food.fname || "").trim().toLowerCase(), Number(food.price) || 0])
+      apiFoods.map((food) => [String(food.fname || "").trim().toLowerCase(), food])
     );
 
     const fromMenu = MENU_FOODS.filter((food) => !hidden.includes(food._id)).map((food) => {
@@ -75,10 +75,12 @@ export default function FoodsPage() {
           .toLowerCase()
       );
       const nameKey = String(food.fname || "").trim().toLowerCase();
+      const dbFood = dbPriceByName.get(nameKey);
       return {
         ...food,
         image: imageOverrides[food._id] || food.image,
-        price: dbPriceByName.get(nameKey) || 0,
+        price: Number(dbFood?.price) > 0 ? Number(dbFood.price) : 0,
+        available: dbFood ? dbFood.available !== false : true,
         categoryKeys: keys ? Array.from(keys) : [food.categoryId],
         source: "menu",
       };
@@ -104,6 +106,7 @@ export default function FoodsPage() {
           details: food.description || "Freshly prepared and tasty food item from this category.",
           image: imageOverrides[food._id] || food.image || "/images/Snacks.jpg",
           price: Number(food.price) > 0 ? Number(food.price) : 0,
+          available: food.available !== false,
           categoryId: matched?.filterId || categoryMongoId,
           categoryKeys: Array.from(keys),
           source: "api",
@@ -219,6 +222,7 @@ export default function FoodsPage() {
             const image = food.image ?? "/images/Snacks.jpg";
             const priceLabel = formatPrice(food.price);
             const isExpanded = expandedFood === id;
+            const isAvailable = food.available !== false;
 
             return (
               <div key={id} className="h-full min-h-[380px] [perspective:1000px]">
@@ -226,9 +230,22 @@ export default function FoodsPage() {
                   className="relative h-full min-h-[380px] w-full rounded border border-zinc-200 dark:border-zinc-700 transition-transform duration-700 [transform-style:preserve-3d]"
                   style={{ transform: isExpanded ? "rotateY(180deg)" : "rotateY(0deg)" }}
                 >
-                  <article className="absolute inset-0 flex flex-col overflow-hidden rounded bg-white shadow-sm [backface-visibility:hidden] dark:bg-zinc-900">
-                    <div className="food-media-frame h-36 shrink-0 sm:h-40">
-                      <img src={image} alt={food.fname} className="food-media" />
+                  <article
+                    className={`absolute inset-0 flex flex-col overflow-hidden rounded bg-white shadow-sm [backface-visibility:hidden] dark:bg-zinc-900 ${
+                      !isAvailable ? "opacity-90" : ""
+                    }`}
+                  >
+                    <div className="food-media-frame relative h-36 shrink-0 sm:h-40">
+                      <img
+                        src={image}
+                        alt={food.fname}
+                        className={`food-media transition ${!isAvailable ? "scale-105 blur-[2px]" : ""}`}
+                      />
+                      {!isAvailable && (
+                        <span className="absolute left-3 top-3 rounded bg-rose-600/90 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+                          Unavailable
+                        </span>
+                      )}
                     </div>
                     <div className="flex min-h-0 flex-1 flex-col p-4">
                       <div className="flex items-start justify-between gap-3">
@@ -236,6 +253,11 @@ export default function FoodsPage() {
                           <h3 className="text-xl font-normal leading-tight sm:text-2xl">{food.fname}</h3>
                           {priceLabel && (
                             <p className="mt-1 text-base font-semibold text-[#ee6e73] dark:text-[#f0a8ad]">{priceLabel}</p>
+                          )}
+                          {!isAvailable && (
+                            <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-rose-600 dark:text-rose-400">
+                              Currently unavailable
+                            </p>
                           )}
                         </div>
                         <button
@@ -250,14 +272,20 @@ export default function FoodsPage() {
                       <p className="mt-2 line-clamp-3 flex-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">{summary}</p>
                       <button
                         type="button"
-                        className="brand-btn mt-4 w-full shrink-0 rounded-sm px-4 py-2 text-[11px] font-semibold uppercase tracking-wide transition"
+                        disabled={!isAvailable}
+                        className={`mt-4 w-full shrink-0 rounded-sm px-4 py-2 text-[11px] font-semibold uppercase tracking-wide transition ${
+                          isAvailable
+                            ? "brand-btn"
+                            : "cursor-not-allowed bg-zinc-200 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-500"
+                        }`}
                         onClick={() => {
+                          if (!isAvailable) return;
                           addItem(food);
                           setCartNotice(`"${food.fname}" added to cart!`);
                           window.setTimeout(() => setCartNotice(""), 2500);
                         }}
                       >
-                        Add to Cart
+                        {isAvailable ? "Add to Cart" : "Unavailable"}
                       </button>
                     </div>
                   </article>
@@ -268,6 +296,11 @@ export default function FoodsPage() {
                         <h3 className="text-xl font-normal leading-tight">{food.fname}</h3>
                         {priceLabel && (
                           <p className="mt-1 text-base font-semibold text-[#ee6e73] dark:text-[#f0a8ad]">{priceLabel}</p>
+                        )}
+                        {!isAvailable && (
+                          <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-rose-600 dark:text-rose-400">
+                            Currently unavailable
+                          </p>
                         )}
                       </div>
                       <button

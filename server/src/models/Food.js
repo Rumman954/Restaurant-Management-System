@@ -7,6 +7,7 @@ const schema = new mongoose.Schema(
     description: { type: String, default: "" },
     image: { type: String, default: "" },
     price: { type: Number, default: 0, min: 0 },
+    available: { type: Boolean, default: true },
   },
   { timestamps: true }
 );

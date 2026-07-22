@@ -15,8 +15,8 @@ router.get("/categories", async (_req, res) => {
 
 router.get("/foods", async (req, res) => {
   try {
-    const query = req.query.categoryId ? { categoryId: req.query.categoryId } : {};
-    const rows = await Food.find(query).populate("categoryId", "name").sort({ createdAt: 1 });
+    const baseQuery = req.query.categoryId ? { categoryId: req.query.categoryId } : {};
+    const rows = await Food.find(baseQuery).populate("categoryId", "name").sort({ createdAt: 1 });
     res.json(rows);
   } catch (error) {
     res.status(500).json({ message: error.message });

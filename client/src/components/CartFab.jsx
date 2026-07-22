@@ -23,6 +23,8 @@ function BagIcon() {
 export default function CartFab() {
   const { itemCount } = useCart();
 
+  if (itemCount <= 0) return null;
+
   return (
     <Link
       to="/cart"
@@ -30,11 +32,9 @@ export default function CartFab() {
       aria-label={`Open cart with ${itemCount} items`}
     >
       <BagIcon />
-      {itemCount > 0 && (
-        <span className="absolute -right-1 -top-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-[#ee6e73] px-1.5 text-xs font-bold text-white dark:bg-[#421F37]">
-          {itemCount > 99 ? "99+" : itemCount}
-        </span>
-      )}
+      <span className="absolute -right-1 -top-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-[#ee6e73] px-1.5 text-xs font-bold text-white dark:bg-[#421F37]">
+        {itemCount > 99 ? "99+" : itemCount}
+      </span>
       <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide">Cart</span>
     </Link>
   );

@@ -45,6 +45,34 @@ function paymentStatusBadge(order) {
   );
 }
 
+function FoodAvailabilityCell({ food, onToggle }) {
+  const isAvailable = food.available !== false;
+  return (
+    <div className="flex flex-col items-start gap-2">
+      {isAvailable ? (
+        <span className="rounded bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold uppercase text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+          Available
+        </span>
+      ) : (
+        <span className="rounded bg-rose-100 px-2 py-0.5 text-[11px] font-semibold uppercase text-rose-700 dark:bg-rose-950 dark:text-rose-300">
+          Unavailable
+        </span>
+      )}
+      {food.dbId ? (
+        <button
+          type="button"
+          onClick={() => onToggle(food)}
+          className="rounded border border-[color:var(--a-border)] px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--a-heading)] transition hover:bg-[var(--a-soft)]"
+        >
+          {isAvailable ? "Mark Unavailable" : "Mark Available"}
+        </button>
+      ) : (
+        <span className="text-[11px] text-[var(--a-muted)]">Save food to change status</span>
+      )}
+    </div>
+  );
+}
+
 function OrderStatusSelect({ value, onChange, disabled = false }) {
   return (
     <select
@@ -140,12 +168,12 @@ function getMenuPlacement(triggerEl, menuHeight = 130) {
 }
 
 function menuPlacementClass(placement) {
-  if (placement === "above") return "bottom-full mb-1";
+  if (placement === "above") return "bottom-full translate-y-2";
   if (placement === "middle") return "top-1/2 -translate-y-1/2";
   return "top-full mt-1";
 }
 
-function useExclusiveActionMenu(menuHeight = 130) {
+function useExclusiveActionMenu(menuHeight = 130, preferAbove = false) {
   const [open, setOpen] = useState(false);
   const [placement, setPlacement] = useState("below");
   const triggerRef = useRef(null);
@@ -154,6 +182,11 @@ function useExclusiveActionMenu(menuHeight = 130) {
   useEffect(() => {
     openRef.current = open;
   }, [open]);
+
+  const resolvePlacement = () => {
+    if (preferAbove) return "above";
+    return getMenuPlacement(triggerRef.current, menuHeight);
+  };
 
   const closeMenu = () => {
     setOpen(false);
@@ -167,16 +200,16 @@ function useExclusiveActionMenu(menuHeight = 130) {
       return;
     }
     closeExclusiveMenu();
-    setPlacement(getMenuPlacement(triggerRef.current, menuHeight));
+    setPlacement(resolvePlacement());
     setOpen(true);
     exclusiveMenuClose = closeMenu;
   };
 
   useEffect(() => {
     if (!open) return undefined;
-    setPlacement(getMenuPlacement(triggerRef.current, menuHeight));
+    setPlacement(resolvePlacement());
     const onOutsideClick = () => closeMenu();
-    const reposition = () => setPlacement(getMenuPlacement(triggerRef.current, menuHeight));
+    const reposition = () => setPlacement(resolvePlacement());
     window.addEventListener("click", onOutsideClick);
     window.addEventListener("resize", reposition);
     window.addEventListener("scroll", reposition, true);
@@ -185,7 +218,7 @@ function useExclusiveActionMenu(menuHeight = 130) {
       window.removeEventListener("resize", reposition);
       window.removeEventListener("scroll", reposition, true);
     };
-  }, [open, menuHeight]);
+  }, [open, menuHeight, preferAbove]);
 
   useEffect(() => () => {
     if (exclusiveMenuClose === closeMenu) exclusiveMenuClose = null;
@@ -298,8 +331,8 @@ function roleLabel(role) {
   return "Customer";
 }
 
-function UserActionMenu({ user, onView, onMakeEmployee, onMakeAdmin, onRemoveEmployee, onToggleBlock }) {
-  const { open, closeMenu, toggleMenu, placement, triggerRef } = useExclusiveActionMenu(180);
+function UserActionMenu({ user, onView, onMakeEmployee, onMakeAdmin, onRemoveEmployee, onToggleBlock, openAbove = false }) {
+  const { open, closeMenu, toggleMenu, placement, triggerRef } = useExclusiveActionMenu(180, openAbove);
   const role = user.role || "customer";
 
   return (
@@ -327,7 +360,7 @@ function UserActionMenu({ user, onView, onMakeEmployee, onMakeAdmin, onRemoveEmp
           >
             View Details
           </button>
-          {role !== "employee" && (
+          {role === "customer" && (
             <button
               type="button"
               className="block w-full px-3 py-2 text-left text-sm text-[var(--a-text)] transition hover:bg-[var(--a-nav-hover)]"
@@ -339,7 +372,7 @@ function UserActionMenu({ user, onView, onMakeEmployee, onMakeAdmin, onRemoveEmp
               Make Employee
             </button>
           )}
-          {role !== "admin" && (
+          {role === "employee" && (
             <button
               type="button"
               className="block w-full px-3 py-2 text-left text-sm text-[var(--a-text)] transition hover:bg-[var(--a-nav-hover)]"
@@ -497,7 +530,7 @@ export default function AdminPage() {
   const [alertPopup, setAlertPopup] = useState({ open: false, type: "success", message: "" });
   const [showLoginBanner, setShowLoginBanner] = useState(true);
   const [foodModal, setFoodModal] = useState({ open: false, mode: "add", foodId: null, menuId: null });
-  const [foodForm, setFoodForm] = useState({ fname: "", description: "", categoryId: "", image: "", price: "" });
+  const [foodForm, setFoodForm] = useState({ fname: "", description: "", categoryId: "", image: "", price: "", available: true });
   const [foodSaving, setFoodSaving] = useState(false);
   const [foodsPage, setFoodsPage] = useState(1);
   const [foodsSearch, setFoodsSearch] = useState("");
@@ -608,6 +641,7 @@ export default function AdminPage() {
         categoryName: db?.categoryId?.name || categoryLabel(food.categoryId),
         categoryId: db?.categoryId?._id || db?.categoryId || "",
         image: overrideImage || db?.image || food.image || "",
+        available: db ? db.available !== false : true,
       };
     });
 
@@ -623,6 +657,7 @@ export default function AdminPage() {
         categoryName: food.categoryId?.name || "—",
         categoryId: food.categoryId?._id || food.categoryId || "",
         image: imageOverrides[food._id] || food.image || "",
+        available: food.available !== false,
       }));
 
     return [...fromMenu, ...fromDbOnly];
@@ -824,7 +859,7 @@ export default function AdminPage() {
   };
 
   const openAddFoodModal = () => {
-    setFoodForm({ fname: "", description: "", categoryId: "", image: "", price: "" });
+    setFoodForm({ fname: "", description: "", categoryId: "", image: "", price: "", available: true });
     setFoodModal({ open: true, mode: "add", foodId: null, menuId: null });
   };
 
@@ -839,13 +874,14 @@ export default function AdminPage() {
       categoryId: matchedCategory,
       image: food.image || "",
       price: Number(food.price) > 0 ? String(food.price) : "",
+      available: food.available !== false,
     });
     setFoodModal({ open: true, mode: "edit", foodId: food.dbId, menuId: food.menuId });
   };
 
   const closeFoodModal = () => {
     setFoodModal({ open: false, mode: "add", foodId: null, menuId: null });
-    setFoodForm({ fname: "", description: "", categoryId: "", image: "", price: "" });
+    setFoodForm({ fname: "", description: "", categoryId: "", image: "", price: "", available: true });
   };
 
   const handleFoodImageFile = (event) => {
@@ -897,6 +933,7 @@ export default function AdminPage() {
       categoryId: foodForm.categoryId,
       image: foodForm.image.trim(),
       price: foodForm.price === "" ? 0 : parsedPrice,
+      available: Boolean(foodForm.available),
     };
 
     try {
@@ -934,6 +971,28 @@ export default function AdminPage() {
       setAlertPopup({ open: true, type: "error", message });
     } finally {
       setFoodSaving(false);
+    }
+  };
+
+  const handleToggleFoodAvailability = async (food) => {
+    if (!food.dbId) {
+      setActionStatus({ type: "error", message: "Save this food first before changing availability." });
+      return;
+    }
+    const nextAvailable = food.available === false;
+    try {
+      const res = await api.put(
+        `/admin/foods/${food.dbId}`,
+        { available: nextAvailable },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setActionStatus({
+        type: "success",
+        message: res?.data?.msg || `Food marked as ${nextAvailable ? "available" : "unavailable"}.`,
+      });
+      await loadOverview();
+    } catch (e) {
+      setActionStatus({ type: "error", message: e?.response?.data?.msg || "Could not update food availability." });
     }
   };
 
@@ -1433,6 +1492,7 @@ export default function AdminPage() {
                       <th className="py-3 pr-4 font-semibold">Description</th>
                       <th className="py-3 pr-4 font-semibold">Category</th>
                       <th className="py-3 pr-4 font-semibold">Price</th>
+                      <th className="py-3 pr-4 font-semibold">Status</th>
                       <th className="py-3 pr-2 text-right font-semibold">Action</th>
                     </tr>
                   </thead>
@@ -1456,6 +1516,9 @@ export default function AdminPage() {
                         <td className="py-3 pr-4 align-top font-medium text-[var(--a-heading)]">
                           {formatPrice(food.price) || "—"}
                         </td>
+                        <td className="py-3 pr-4 align-top">
+                          <FoodAvailabilityCell food={food} onToggle={handleToggleFoodAvailability} />
+                        </td>
                         <td className="py-3 pr-2 align-top text-right">
                           <FoodActionMenu
                             onEdit={() => openEditFoodModal(food)}
@@ -1467,7 +1530,7 @@ export default function AdminPage() {
                     ))}
                     {filteredFoodRows.length === 0 && (
                       <tr>
-                        <td className="py-6 text-center text-[var(--a-muted)]" colSpan={5}>
+                        <td className="py-6 text-center text-[var(--a-muted)]" colSpan={6}>
                           {foodsSearch.trim() ? "No foods match your search." : "No foods found."}
                         </td>
                       </tr>
@@ -1550,6 +1613,7 @@ export default function AdminPage() {
                           <th className="py-3 pr-4 font-semibold">Name</th>
                           <th className="py-3 pr-4 font-semibold">Description</th>
                           <th className="py-3 pr-4 font-semibold">Price</th>
+                          <th className="py-3 pr-4 font-semibold">Status</th>
                           <th className="py-3 pr-2 text-right font-semibold">Action</th>
                         </tr>
                       </thead>
@@ -1572,6 +1636,9 @@ export default function AdminPage() {
                             <td className="py-3 pr-4 align-top font-medium text-[var(--a-heading)]">
                               {formatPrice(food.price) || "—"}
                             </td>
+                            <td className="py-3 pr-4 align-top">
+                              <FoodAvailabilityCell food={food} onToggle={handleToggleFoodAvailability} />
+                            </td>
                             <td className="py-3 pr-2 align-top text-right">
                               <FoodActionMenu
                                 onEdit={() => openEditFoodModal(food)}
@@ -1583,7 +1650,7 @@ export default function AdminPage() {
                         ))}
                         {categoryFoodRows.length === 0 && (
                           <tr>
-                            <td className="py-6 text-center text-[var(--a-muted)]" colSpan={4}>
+                            <td className="py-6 text-center text-[var(--a-muted)]" colSpan={5}>
                               No foods in this category yet.
                             </td>
                           </tr>
@@ -2054,7 +2121,7 @@ export default function AdminPage() {
                     </div>
                   </div>
                   <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
-                    {selectedAdminUser.role !== "employee" && (
+                    {selectedAdminUser.role === "customer" && (
                       <button
                         type="button"
                         className="rounded-lg border border-[color:var(--a-border)] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--a-heading)] transition hover:bg-[var(--a-soft)]"
@@ -2063,7 +2130,7 @@ export default function AdminPage() {
                         Make Employee
                       </button>
                     )}
-                    {selectedAdminUser.role !== "admin" && (
+                    {selectedAdminUser.role === "employee" && (
                       <button
                         type="button"
                         className="rounded-lg border border-[color:var(--a-border)] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--a-heading)] transition hover:bg-[var(--a-soft)]"
@@ -2126,7 +2193,7 @@ export default function AdminPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {paginatedUserRows.map((user) => (
+                        {paginatedUserRows.map((user, index) => (
                           <tr
                             key={user._id}
                             className={`${tableRowClass} cursor-pointer transition hover:bg-[var(--a-soft)]`}
@@ -2157,6 +2224,7 @@ export default function AdminPage() {
                             <td className="py-3 pr-2 text-right" onClick={(event) => event.stopPropagation()}>
                               <UserActionMenu
                                 user={user}
+                                openAbove={index === paginatedUserRows.length - 1 && paginatedUserRows.length > 1}
                                 onView={() => openUserDetails(user)}
                                 onMakeEmployee={() => handleSetUserRole(user, "employee")}
                                 onMakeAdmin={() => handleSetUserRole(user, "admin")}
@@ -2305,6 +2373,15 @@ export default function AdminPage() {
                   <p className="mt-1 text-xs text-amber-500">No categories found. Add a category first.</p>
                 )}
               </div>
+              <label className="flex items-center gap-2 text-sm text-[var(--a-text)]">
+                <input
+                  type="checkbox"
+                  checked={foodForm.available}
+                  onChange={(event) => setFoodForm((prev) => ({ ...prev, available: event.target.checked }))}
+                  className="h-4 w-4 rounded border-[color:var(--a-border)]"
+                />
+                Available on public menu
+              </label>
               <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button"

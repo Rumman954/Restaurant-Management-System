@@ -42,4 +42,13 @@ const requireAdmin = (req, res, next) => {
   next();
 };
 
-module.exports = { requireAuth, requireAdmin };
+const requireEmployee = (req, res, next) => {
+  const role = req.user?.role;
+  const isStaff = Boolean(req.user?.isEnvAdmin) || role === "admin" || role === "employee";
+  if (!req.user || !isStaff) {
+    return res.status(403).json({ code: "0", msg: "Employee access required." });
+  }
+  next();
+};
+
+module.exports = { requireAuth, requireAdmin, requireEmployee };
