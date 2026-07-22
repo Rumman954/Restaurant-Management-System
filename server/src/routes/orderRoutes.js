@@ -34,9 +34,15 @@ function summarizeFoodName(items) {
 let stripe = null;
 function getStripe() {
   if (stripe) return stripe;
-  const key = process.env.STRIPE_SECRET_KEY;
-  if (!key || !String(key).trim()) return null;
-  stripe = require("stripe")(String(key).trim());
+  let key = String(process.env.STRIPE_SECRET_KEY || "").trim();
+  // Common paste mistakes: quotes, newlines, accidental publishable key
+  key = key.replace(/^["']|["']$/g, "").replace(/\s+/g, "");
+  if (!key) return null;
+  if (!key.startsWith("sk_")) {
+    console.error("STRIPE_SECRET_KEY must start with sk_ (not pk_)");
+    return null;
+  }
+  stripe = require("stripe")(key);
   return stripe;
 }
 
