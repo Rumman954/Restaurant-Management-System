@@ -1,87 +1,88 @@
-# Deploy so Login works on Vercel
+# Deploy Login on Vercel (no Render)
 
-Vercel only hosts the website (frontend).  
-Login needs a live **API server** + **MongoDB**.
-
-Follow these 3 steps once.
+Frontend + API both run on **Vercel**.  
+You only need a free **MongoDB Atlas** database.
 
 ---
 
-## Step 1 — Free MongoDB (Atlas)
+## Step 1 — Free MongoDB Atlas
 
-1. Open https://www.mongodb.com/cloud/atlas and create a free account.
+1. Go to https://www.mongodb.com/cloud/atlas and create a free account.
 2. Create a **Free (M0)** cluster.
-3. Click **Connect** → **Drivers** → copy the connection string.  
-   Example shape:
-   `mongodb+srv://USERNAME:PASSWORD@cluster0.xxxxx.mongodb.net/restaurant-mern?retryWrites=true&w=majority`
-4. Network Access → **Allow Access from Anywhere** (`0.0.0.0/0`) so Render can connect.
-5. Replace `USERNAME` / `PASSWORD` with your DB user password.
+3. **Database Access** → create a user (username + password).
+4. **Network Access** → Add IP → **Allow Access from Anywhere** (`0.0.0.0/0`).
+5. **Connect** → **Drivers** → copy the URI, for example:
 
-Keep this string ready — you need it in Step 2.
+```text
+mongodb+srv://USER:PASSWORD@cluster0.xxxxx.mongodb.net/restaurant-mern?retryWrites=true&w=majority
+```
 
----
-
-## Step 2 — Deploy API on Render (free)
-
-1. Open https://dashboard.render.com and sign up (GitHub login is easiest).
-2. Click **New** → **Blueprint**.
-3. Connect the GitHub repo: `Rumman954/Restaurant-Management-System`.
-4. Render will read `render.yaml` automatically.
-5. When asked for **MONGO_URI**, paste your Atlas string from Step 1.
-6. Click **Apply**.
-7. Wait until the service is **Live**.
-8. Copy the service URL, for example:
-   `https://restaurant-mern-api.onrender.com`
-
-Test in browser:
-`https://YOUR-RENDER-URL/api/health`  
-You should see `{ "ok": true, ... }`.
+Replace `USER` and `PASSWORD` with your DB user.  
+If the password has special characters, URL-encode them.
 
 ---
 
-## Step 3 — Point Vercel at the API
+## Step 2 — Vercel Environment Variables
 
-1. Open your Vercel project → **Settings** → **Environment Variables**.
-2. Set / update:
+Open your Vercel project → **Settings** → **Environment Variables**.
+
+### Add these (Production + Preview):
 
 | Name | Value |
 |------|--------|
-| `VITE_API_BASE_URL` | `https://YOUR-RENDER-URL/api` |
+| `MONGO_URI` | your Atlas connection string from Step 1 |
+| `JWT_SECRET` | any long random string, e.g. `my-restaurant-secret-key-2026` |
+| `ADMIN_EMAIL` | `admin@gmail.com` |
+| `ADMIN_PASSWORD` | `admin123` |
 
-Example:
-`VITE_API_BASE_URL=https://restaurant-mern-api.onrender.com/api`
+### Fix / remove this:
 
-**Important:** Do **not** keep `https://YOUR-BACKEND-URL/api`. That was only a placeholder.
+| Name | Action |
+|------|--------|
+| `VITE_API_BASE_URL` | **Delete it**, or set to exactly `/api` |
 
-3. Redeploy:
-   - Deployments → latest → **Redeploy**  
-   - Or push any small commit to `main`.
+Do **not** keep `https://YOUR-BACKEND-URL/api` — that breaks login.
 
-4. Open the live site and login:
+Optional:
+
+| Name | Value |
+|------|--------|
+| `CLIENT_ORIGIN` | `https://restaurant-management-system-omega-liard.vercel.app` |
+| `STRIPE_SECRET_KEY` | your Stripe secret (only if using online pay) |
+| `VITE_STRIPE_PUBLISHABLE_KEY` | your Stripe publishable key |
+
+---
+
+## Step 3 — Redeploy
+
+1. Vercel → **Deployments** → latest → **Redeploy**  
+   (check “Use existing Build Cache” **off** if available)
+2. Or push a new commit to `main`.
+
+---
+
+## Step 4 — Test
+
+1. Open: `https://YOUR-SITE.vercel.app/api/health`  
+   Should show `{ "ok": true, ... }`
+2. Login with:
    - Admin: `admin@gmail.com` / `admin123`
    - Employee: `employee@gmail.com` / `employee123`
    - Customer: `customer@gmail.com` / `customer123`
 
 ---
 
-## If login still fails
-
-1. Open browser DevTools → **Network** → try Login.
-2. Check the request URL. It must be your Render `/api/auth/login`, not `localhost` and not `YOUR-BACKEND-URL`.
-3. Open `https://YOUR-RENDER-URL/api/health` — must work.
-4. Free Render apps sleep after idle; first request can take ~30–60 seconds. Wait and try again.
-
----
-
 ## Local development (unchanged)
 
-```bash
-# server/.env
+`server/.env`:
+```env
 MONGO_URI=mongodb://127.0.0.1:27017/restaurant-mern
 JWT_SECRET=dev-secret
+```
 
-# client/.env
+`client/.env`:
+```env
 VITE_API_BASE_URL=http://localhost:5000/api
 ```
 
-Then run `npm run dev` from the project root.
+Then: `npm run dev`

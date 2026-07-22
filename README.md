@@ -32,14 +32,16 @@ Server: `http://localhost:5000`
 
 ## Deploy (so Login works on Vercel)
 
-Vercel hosts only the **frontend**. Login needs a live API + MongoDB.
+Frontend and API both deploy on **Vercel**. You only need free MongoDB Atlas.
 
 **Full steps:** see [DEPLOY.md](./DEPLOY.md)
 
 Short version:
 
-1. Create free MongoDB Atlas DB and copy `MONGO_URI`.
-2. Deploy API with Render Blueprint (`render.yaml` in this repo).
-3. In Vercel env, set real URL (not a placeholder):
-   - `VITE_API_BASE_URL=https://YOUR-RENDER-URL/api`
-4. Redeploy Vercel.
+1. Create free MongoDB Atlas and copy `MONGO_URI`.
+2. In Vercel → Environment Variables, set:
+   - `MONGO_URI` = Atlas connection string
+   - `JWT_SECRET` = any long secret
+   - Delete `VITE_API_BASE_URL` (or set it to `/api`)
+3. Redeploy Vercel.
+4. Test: `https://YOUR-SITE.vercel.app/api/health`
