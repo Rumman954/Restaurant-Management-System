@@ -30,13 +30,16 @@ No PHP is used in this project.
 Client: `http://localhost:5173`  
 Server: `http://localhost:5000`
 
-## Vercel note
+## Deploy (so Login works on Vercel)
 
-Vercel hosts only the **frontend**. Categories/Foods browse from built-in menu data (no API required).
+Vercel hosts only the **frontend**. Login needs a live API + MongoDB.
 
-For Login / Register / Orders / Admin on the live site:
+**Full steps:** see [DEPLOY.md](./DEPLOY.md)
 
-1. Deploy `server` + MongoDB (Atlas) to a host like Render/Railway.
-2. In Vercel Project Settings → Environment Variables, set:
-   - `VITE_API_BASE_URL=https://YOUR-BACKEND-URL/api`
-3. Redeploy the frontend.
+Short version:
+
+1. Create free MongoDB Atlas DB and copy `MONGO_URI`.
+2. Deploy API with Render Blueprint (`render.yaml` in this repo).
+3. In Vercel env, set real URL (not a placeholder):
+   - `VITE_API_BASE_URL=https://YOUR-RENDER-URL/api`
+4. Redeploy Vercel.
