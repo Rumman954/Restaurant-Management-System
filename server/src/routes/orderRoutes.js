@@ -173,7 +173,14 @@ router.post("/orders/create-payment-intent", requireAuth, async (req, res) => {
       amount: totals.total,
     });
   } catch (error) {
-    res.status(500).json({ code: "0", msg: error.message });
+    const message = String(error?.message || "Could not start payment.");
+    if (/invalid api key/i.test(message)) {
+      return res.status(500).json({
+        code: "0",
+        msg: "Invalid STRIPE_SECRET_KEY on Vercel. Re-copy the Secret key (sk_test_...) from Stripe with no spaces or quotes, save, and Redeploy.",
+      });
+    }
+    res.status(500).json({ code: "0", msg: message });
   }
 });
 
