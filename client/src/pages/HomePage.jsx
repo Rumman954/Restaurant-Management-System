@@ -188,11 +188,16 @@ export default function HomePage() {
           Resturant Powered By Students
         </h2>
         <div className="grid items-end gap-6 md:grid-cols-[1.7fr_1fr] md:gap-8">
-          <p className="mx-auto max-w-[700px] text-center text-base leading-8 text-zinc-600 dark:text-zinc-400 sm:text-lg sm:leading-9 md:text-left">
-            Resturant is an online food ordering and restaurant management system. Customers can explore categories,
-            choose delicious meals, add items to the cart, and place pickup or home-delivery orders. Behind the scenes,
-            admins and employees manage foods, update availability, confirm new orders, and mark them delivered — so
-            every guest gets fresh food and every order stays organised from kitchen to doorstep.
+          <p className="mx-auto max-w-[700px] text-center text-[14px] leading-7 text-zinc-600 dark:text-zinc-400 md:text-left">
+            Resturant is an online food ordering and restaurant management system designed for everyday customers and
+            kitchen staff. Guests can explore food categories such as Bangladeshi, Chinese, Italian, Thai, and Snacks,
+            view item details and prices, and add their favourite dishes to the cart in a few clicks. When checkout is
+            ready, customers choose pickup or home delivery, confirm their address if needed, and place the order with
+            Cash on Delivery or secure online payment. Behind the scenes, the admin dashboard helps manage foods,
+            categories, users, and order flow, while employees confirm new orders, prepare pending meals, and mark
+            them delivered. Menu availability can be updated so unavailable items are clearly shown and cannot be
+            ordered by mistake. From browsing dishes to receiving food at the door, Resturant keeps ordering simple for
+            guests and keeps restaurant operations organised for the team — all in one modern web platform.
           </p>
           <img
             src="/images/cooking-6668437_1280.png"
